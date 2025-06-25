@@ -36,12 +36,12 @@
         <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
         <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
         <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
-        <button onclick="sendCommand('AUTO')">Auto Mode</button>
-        <button onclick="sendCommand('MANUAL 10')">Manual 10% Duty</button>
-        <button onclick="sendCommand('C6')">6A</button>
-        <button onclick="sendCommand('C16')">16A</button>
-        <button onclick="sendCommand('C32')">32A</button>
-        <button onclick="sendCommand('TEST_GFCI')">Test GFCI</button>
+        <button onclick="sendCommand('AUTO')" disabled>Auto Mode</button>
+        <button onclick="sendCommand('MANUAL 10')" disabled>Manual 10% Duty</button>
+        <button onclick="sendCommand('C6')" disabled>6A</button>
+        <button onclick="sendCommand('C16')" disabled>16A</button>
+        <button onclick="sendCommand('C32')" disabled>32A</button>
+        <button onclick="sendCommand('TEST_GFCI')" disabled>Test GFCI</button>
     </div>
     <div class="log">
         <p><strong>Test Logs:</strong></p>
@@ -51,11 +51,9 @@
     <script>
         let device = null;
         let stateCharacteristic = null;
-        let commandCharacteristic = null;
         let pollInterval = null;
         const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-        const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
         function logMessage(message) {
             console.log(message);
@@ -106,20 +104,10 @@
                     logMessage(`State characteristic error: ${stateError.message}`);
                     throw new Error(`State characteristic error: ${stateError.message}`);
                 }
-                try {
-                    logMessage('Accessing command characteristic...');
-                    commandCharacteristic = await service.getCharacteristic(commandUUID);
-                    logMessage('Command characteristic accessed');
-                    logMessage(`Command characteristic UUID: ${commandCharacteristic.uuid}`);
-                } catch (cmdError) {
-                    logMessage(`Command characteristic error: ${cmdError.message}`);
-                    throw new Error(`Command characteristic error: ${cmdError.message}`);
-                }
                 document.getElementById('status').textContent = 'Connected (Polling)';
                 document.getElementById('status').style.color = 'green';
                 document.getElementById('connectButton').textContent = 'Disconnect';
                 document.getElementById('connectButton').onclick = disconnectBLE;
-                // NEW: Start polling instead of notifications
                 logMessage('Starting state polling...');
                 pollInterval = setInterval(async () => {
                     try {
@@ -129,7 +117,6 @@
                         logMessage(`Poll error: ${pollError.message}`);
                     }
                 }, 1000);
-                // Read initial state
                 const initialValue = await stateCharacteristic.readValue();
                 handleStateUpdate({ target: { value: initialValue } });
             } catch (error) {
@@ -137,7 +124,6 @@
                 logMessage(`Connection error: ${error.message}`);
                 device = null;
                 stateCharacteristic = null;
-                commandCharacteristic = null;
                 if (pollInterval) clearInterval(pollInterval);
             }
         }
@@ -161,7 +147,6 @@
             document.getElementById('resetButton').disabled = true;
             device = null;
             stateCharacteristic = null;
-            commandCharacteristic = null;
         }
 
         function handleStateUpdate(event) {
@@ -196,17 +181,7 @@
         }
 
         async function sendCommand(command) {
-            if (!commandCharacteristic) {
-                logMessage('Error: Not connected to command characteristic');
-                return;
-            }
-            try {
-                const data = JSON.stringify({ command });
-                await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-                logMessage(`Sent command: ${command}`);
-            } catch (error) {
-                logMessage(`Command send error: ${error.message}`);
-            }
+            logMessage('Error: Command characteristic not available in read-only mode');
         }
 
         window.onload = () => {
