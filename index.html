@@ -52,6 +52,7 @@
         let device = null;
         let stateCharacteristic = null;
         let commandCharacteristic = null;
+        let pollInterval = null;
         const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
         const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
@@ -96,18 +97,15 @@
                 logMessage('Connected to GATT server');
                 const service = await server.getPrimaryService(serviceUUID);
                 logMessage('Service found');
-                // NEW: Try state characteristic
                 try {
                     logMessage('Accessing state characteristic...');
                     stateCharacteristic = await service.getCharacteristic(stateUUID);
                     logMessage('State characteristic accessed');
-                    // NEW: Log properties
                     logMessage(`State characteristic UUID: ${stateCharacteristic.uuid}`);
                 } catch (stateError) {
                     logMessage(`State characteristic error: ${stateError.message}`);
                     throw new Error(`State characteristic error: ${stateError.message}`);
                 }
-                // NEW: Try command characteristic
                 try {
                     logMessage('Accessing command characteristic...');
                     commandCharacteristic = await service.getCharacteristic(commandUUID);
@@ -117,37 +115,45 @@
                     logMessage(`Command characteristic error: ${cmdError.message}`);
                     throw new Error(`Command characteristic error: ${cmdError.message}`);
                 }
-                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').textContent = 'Connected (Polling)';
                 document.getElementById('status').style.color = 'green';
                 document.getElementById('connectButton').textContent = 'Disconnect';
                 document.getElementById('connectButton').onclick = disconnectBLE;
-                logMessage('Starting notifications...');
-                try {
-                    await stateCharacteristic.startNotifications();
-                    logMessage('Subscribed to state updates');
-                    stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
-                    const initialValue = await stateCharacteristic.readValue();
-                    handleStateUpdate({ target: { value: initialValue } });
-                } catch (notifyError) {
-                    logMessage(`Notification error: ${notifyError.message}`);
-                    throw new Error(`Notification error: ${notifyError.message}`);
-                }
+                // NEW: Start polling instead of notifications
+                logMessage('Starting state polling...');
+                pollInterval = setInterval(async () => {
+                    try {
+                        const value = await stateCharacteristic.readValue();
+                        handleStateUpdate({ target: { value } });
+                    } catch (pollError) {
+                        logMessage(`Poll error: ${pollError.message}`);
+                    }
+                }, 1000);
+                // Read initial state
+                const initialValue = await stateCharacteristic.readValue();
+                handleStateUpdate({ target: { value: initialValue } });
             } catch (error) {
                 document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
                 logMessage(`Connection error: ${error.message}`);
                 device = null;
                 stateCharacteristic = null;
                 commandCharacteristic = null;
+                if (pollInterval) clearInterval(pollInterval);
             }
         }
 
         async function disconnectBLE() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                logMessage('Stopped state polling');
+            }
             if (device && device.gatt.connected) {
                 await device.gatt.disconnect();
                 logMessage('Disconnected from device');
             }
             document.getElementById('status').textContent = 'Disconnected';
-            document.getElementById('status').color = 'red';
+            document.getElementById('status').style.color = 'red';
             document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
             document.getElementById('connectButton').onclick = connectBLE;
             document.getElementById('startButton').disabled = true;
