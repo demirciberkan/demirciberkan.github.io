@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVSE Parker - Web Bluetooth</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { font-size: 24px; }
+        #status { color: red; }
+        button { padding: 10px; margin: 5px; }
+        .info { margin: 10px 0; }
+        .log { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>EVSE Parker Control</h1>
+    <div id="status">Disconnected</div>
+    <div id="bluetoothSupport" class="error" style="display: none;">
+        Web Bluetooth is not supported in this browser. Please use Chrome or Edge.
+    </div>
+    <button id="connectButton" onclick="connectBLE()">Connect to EVSEPARKER</button>
+    <div class="info">
+        <p><strong>State:</strong> <span id="state">Unknown</span></p>
+        <p><strong>CP State:</strong> <span id="cpState">Unknown</span></p>
+        <p><strong>Mode:</strong> <span id="mode">Unknown</span></p>
+        <p><strong>Current:</strong> <span id="currentRMS">0.00</span> A</p>
+        <p><strong>Power:</strong> <span id="power">0.00</span> W</p>
+        <p><strong>Energy:</strong> <span id="energy">0.000</span> kWh</p>
+        <p><strong>Temperature:</strong> <span id="temperature">0.0</span> °C</p>
+        <p><strong>Safety Status:</strong> <span id="safetyStatus">None</span></p>
+        <p><strong>Demo Mode:</strong> <span id="demoMode">False</span></p>
+    </div>
+    <div>
+        <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
+        <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
+        <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
+        <button onclick="sendCommand('AUTO')">Auto Mode</button>
+        <button onclick="sendCommand('MANUAL 10')">Manual 10% Duty</button>
+        <button onclick="sendCommand('C6')">6A</button>
+        <button onclick="sendCommand('C16')">16A</button>
+        <button onclick="sendCommand('C32')">32A</button>
+        <button onclick="sendCommand('TEST_GFCI')">Test GFCI</button>
+    </div>
+    <div class="log">
+        <p><strong>Test Logs:</strong></p>
+        <div id="testLogs"></div>
+    </div>
+
+    <script>
+        let device = null;
+        let stateCharacteristic = null;
+        let commandCharacteristic = null;
+        const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+        const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+
+        // NEW: Log to both console and UI
+        function logMessage(message) {
+            console.log(message);
+            const logsDiv = document.getElementById('testLogs');
+            const p = document.createElement('p');
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(p);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // NEW: Check Web Bluetooth support
+        function checkBluetoothSupport() {
+            if (!navigator.bluetooth) {
+                document.getElementById('bluetoothSupport').style.display = 'block';
+                document.getElementById('connectButton').disabled = true;
+                logMessage('Web Bluetooth API not supported. Use Chrome or Edge.');
+                return false;
+            }
+            return true;
+        }
+
+        async function connectBLE() {
+            if (!checkBluetoothSupport()) return;
+
+            try {
+                logMessage('Requesting Bluetooth device...');
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'EVSEPARKER' }],
+                    optionalServices: [serviceUUID]
+                });
+                document.getElementById('status').textContent = 'Connecting...';
+                logMessage('Connecting to GATT server...');
+                const server = await device.gatt.connect();
+                logMessage('Connected to GATT server');
+                const service = await server.getPrimaryService(serviceUUID);
+                logMessage('Service found');
+                stateCharacteristic = await service.getCharacteristic(stateUUID);
+                commandCharacteristic = await service.getCharacteristic(commandUUID);
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').style.color = 'green';
+                document.getElementById('connectButton').textContent = 'Disconnect';
+                document.getElementById('connectButton').onclick = disconnectBLE;
+                await stateCharacteristic.startNotifications();
+                stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
+                logMessage('Subscribed to state updates');
+                const initialValue = await stateCharacteristic.readValue();
+                handleStateUpdate({ target: { value: initialValue } });
+            } catch (error) {
+                document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
+                logMessage(`Connection error: ${error.message}`);
+                device = null;
+                stateCharacteristic = null;
+                commandCharacteristic = null;
+            }
+        }
+
+        async function disconnectBLE() {
+            if (device && device.gatt.connected) {
+                await device.gatt.disconnect();
+                logMessage('Disconnected from device');
+            }
+            document.getElementById('status').textContent = 'Disconnected';
+            document.getElementById('status').style.color = 'red';
+            document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
+            document.getElementById('connectButton').onclick = connectBLE;
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('resetButton').disabled = true;
+            device = null;
+            stateCharacteristic = null;
+            commandCharacteristic = null;
+        }
+
+        function handleStateUpdate(event) {
+            try {
+                const value = new TextDecoder().decode(event.target.value);
+                const data = JSON.parse(value);
+                logMessage('Received state update');
+                document.getElementById('state').textContent = data.state || 'Unknown';
+                document.getElementById('cpState').textContent = data.cpState || 'Unknown';
+                document.getElementById('mode').textContent = data.mode || 'Unknown';
+                document.getElementById('currentRMS').textContent = (data.currentRMS || 0).toFixed(2);
+                document.getElementById('power').textContent = (data.power || 0).toFixed(2);
+                document.getElementById('energy').textContent = (data.deliveredEnergy || 0).toFixed(3);
+                document.getElementById('temperature').textContent = (data.temperature || 0).toFixed(1);
+                document.getElementById('safetyStatus').textContent = data.safetyStatus || 'None';
+                document.getElementById('demoMode').textContent = data.demoMode ? 'True' : 'False';
+                document.getElementById('startButton').disabled = !data.startButtonEnabled;
+                document.getElementById('stopButton').disabled = !data.stopButtonEnabled;
+                document.getElementById('resetButton').disabled = !data.resetButtonEnabled;
+                const logsDiv = document.getElementById('testLogs');
+                logsDiv.innerHTML = '<p><strong>Test Logs:</strong></p>';
+                if (data.testLogs) {
+                    data.testLogs.forEach(log => {
+                        const p = document.createElement('p');
+                        p.textContent = log;
+                        logsDiv.appendChild(p);
+                    });
+                }
+            } catch (error) {
+                logMessage(`State update error: ${error.message}`);
+            }
+        }
+
+        async function sendCommand(command) {
+            if (!commandCharacteristic) {
+                logMessage('Error: Not connected to command characteristic');
+                return;
+            }
+            try {
+                const data = JSON.stringify({ command });
+                await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+                logMessage(`Sent command: ${command}`);
+            } catch (error) {
+                logMessage(`Command send error: ${error.message}`);
+            }
+        }
+
+        // NEW: Initialize Bluetooth availability check
+        window.onload = () => {
+            checkBluetoothSupport();
+            if (navigator.bluetooth) {
+                navigator.bluetooth.addEventListener('availabilitychanged', (event) => {
+                    logMessage(`Bluetooth availability: ${event.value}`);
+                    if (!event.value) {
+                        disconnectBLE();
+                    }
+                });
+            }
+        };
+    </script>
+</body>
+</html>
