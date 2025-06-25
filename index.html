@@ -18,7 +18,7 @@
     <h1>EVSE Parker Control</h1>
     <div id="status">Disconnected</div>
     <div id="bluetoothSupport" class="error" style="display: none;">
-        Web Bluetooth is not supported in this browser or platform. Please use Chrome or Edge on a supported OS (Windows, macOS, Android). On Linux, ensure bluez 5.50+ and experimental flags are enabled.
+        Web Bluetooth is not supported. Use Chrome or Edge on Windows, macOS, or Android. On Linux, ensure bluez 5.50+ and experimental flags.
     </div>
     <button id="connectButton" onclick="connectBLE()">Connect to EVSEPARKER</button>
     <div class="info">
@@ -72,7 +72,6 @@
                 logMessage('Web Bluetooth API not supported. Use Chrome or Edge on a supported OS. On Linux, ensure bluez 5.50+ and experimental flags.');
                 return false;
             }
-            // NEW: Log platform and Bluetooth availability
             navigator.bluetooth.getAvailability().then(available => {
                 logMessage(`Bluetooth available: ${available}`);
             });
@@ -97,17 +96,42 @@
                 logMessage('Connected to GATT server');
                 const service = await server.getPrimaryService(serviceUUID);
                 logMessage('Service found');
-                stateCharacteristic = await service.getCharacteristic(stateUUID);
-                commandCharacteristic = await service.getCharacteristic(commandUUID);
+                // NEW: Try state characteristic
+                try {
+                    logMessage('Accessing state characteristic...');
+                    stateCharacteristic = await service.getCharacteristic(stateUUID);
+                    logMessage('State characteristic accessed');
+                    // NEW: Log properties
+                    logMessage(`State characteristic UUID: ${stateCharacteristic.uuid}`);
+                } catch (stateError) {
+                    logMessage(`State characteristic error: ${stateError.message}`);
+                    throw new Error(`State characteristic error: ${stateError.message}`);
+                }
+                // NEW: Try command characteristic
+                try {
+                    logMessage('Accessing command characteristic...');
+                    commandCharacteristic = await service.getCharacteristic(commandUUID);
+                    logMessage('Command characteristic accessed');
+                    logMessage(`Command characteristic UUID: ${commandCharacteristic.uuid}`);
+                } catch (cmdError) {
+                    logMessage(`Command characteristic error: ${cmdError.message}`);
+                    throw new Error(`Command characteristic error: ${cmdError.message}`);
+                }
                 document.getElementById('status').textContent = 'Connected';
                 document.getElementById('status').style.color = 'green';
                 document.getElementById('connectButton').textContent = 'Disconnect';
                 document.getElementById('connectButton').onclick = disconnectBLE;
-                await stateCharacteristic.startNotifications();
-                stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
-                logMessage('Subscribed to state updates');
-                const initialValue = await stateCharacteristic.readValue();
-                handleStateUpdate({ target: { value: initialValue } });
+                logMessage('Starting notifications...');
+                try {
+                    await stateCharacteristic.startNotifications();
+                    logMessage('Subscribed to state updates');
+                    stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
+                    const initialValue = await stateCharacteristic.readValue();
+                    handleStateUpdate({ target: { value: initialValue } });
+                } catch (notifyError) {
+                    logMessage(`Notification error: ${notifyError.message}`);
+                    throw new Error(`Notification error: ${notifyError.message}`);
+                }
             } catch (error) {
                 document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
                 logMessage(`Connection error: ${error.message}`);
@@ -123,7 +147,7 @@
                 logMessage('Disconnected from device');
             }
             document.getElementById('status').textContent = 'Disconnected';
-            document.getElementById('status').style.color = 'red';
+            document.getElementById('status').color = 'red';
             document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
             document.getElementById('connectButton').onclick = connectBLE;
             document.getElementById('startButton').disabled = true;
