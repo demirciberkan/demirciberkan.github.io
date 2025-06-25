@@ -350,7 +350,7 @@
       return true;
     }
 
-    async function connectBLE() {
+	 async function connectBLE() {
       if (!checkBluetoothSupport()) return;
       try {
         logMessage('Requesting Bluetooth device...');
@@ -396,6 +396,8 @@
       }
     }
 
+
+   
     async function disconnectBLE() {
       if (pollInterval) {
         clearInterval(pollInterval);
