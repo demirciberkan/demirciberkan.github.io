@@ -36,12 +36,12 @@
         <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
         <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
         <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
-        <button onclick="sendCommand('AUTO')" disabled>Auto Mode</button>
-        <button onclick="sendCommand('MANUAL 10')" disabled>Manual 10% Duty</button>
-        <button onclick="sendCommand('C6')" disabled>6A</button>
-        <button onclick="sendCommand('C16')" disabled>16A</button>
-        <button onclick="sendCommand('C32')" disabled>32A</button>
-        <button onclick="sendCommand('TEST_GFCI')" disabled>Test GFCI</button>
+        <button id="autoButton" onclick="sendCommand('AUTO')" disabled>Auto Mode</button>
+        <button id="manualButton" onclick="sendCommand('MANUAL 10')" disabled>Manual 10% Duty</button>
+        <button id="c6Button" onclick="sendCommand('C6')" disabled>6A</button>
+        <button id="c16Button" onclick="sendCommand('C16')" disabled>16A</button>
+        <button id="c32Button" onclick="sendCommand('C32')" disabled>32A</button>
+        <button id="gfciButton" onclick="sendCommand('TEST_GFCI')" disabled>Test GFCI</button>
     </div>
     <div class="log">
         <p><strong>Test Logs:</strong></p>
@@ -51,9 +51,11 @@
     <script>
         let device = null;
         let stateCharacteristic = null;
+        let commandCharacteristic = null;
         let pollInterval = null;
         const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
         function logMessage(message) {
             console.log(message);
@@ -104,6 +106,15 @@
                     logMessage(`State characteristic error: ${stateError.message}`);
                     throw new Error(`State characteristic error: ${stateError.message}`);
                 }
+                try {
+                    logMessage('Accessing command characteristic...');
+                    commandCharacteristic = await service.getCharacteristic(commandUUID);
+                    logMessage('Command characteristic accessed');
+                    logMessage(`Command characteristic UUID: ${commandCharacteristic.uuid}`);
+                } catch (cmdError) {
+                    logMessage(`Command characteristic error: ${cmdError.message}`);
+                    throw new Error(`Command characteristic error: ${cmdError.message}`);
+                }
                 document.getElementById('status').textContent = 'Connected (Polling)';
                 document.getElementById('status').style.color = 'green';
                 document.getElementById('connectButton').textContent = 'Disconnect';
@@ -112,18 +123,32 @@
                 pollInterval = setInterval(async () => {
                     try {
                         const value = await stateCharacteristic.readValue();
+                        const raw = new TextDecoder().decode(value);
+                        logMessage(`Raw value: ${raw}`);
                         handleStateUpdate({ target: { value } });
                     } catch (pollError) {
                         logMessage(`Poll error: ${pollError.message}`);
                     }
                 }, 1000);
                 const initialValue = await stateCharacteristic.readValue();
+                const rawInitial = new TextDecoder().decode(initialValue);
+                logMessage(`Raw initial value: ${rawInitial}`);
                 handleStateUpdate({ target: { value: initialValue } });
+                document.getElementById('startButton').disabled = false;
+                document.getElementById('stopButton').disabled = false;
+                document.getElementById('resetButton').disabled = false;
+                document.getElementById('autoButton').disabled = false;
+                document.getElementById('manualButton').disabled = false;
+                document.getElementById('c6Button').disabled = false;
+                document.getElementById('c16Button').disabled = false;
+                document.getElementById('c32Button').disabled = false;
+                document.getElementById('gfciButton').disabled = false;
             } catch (error) {
                 document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
                 logMessage(`Connection error: ${error.message}`);
                 device = null;
                 stateCharacteristic = null;
+                commandCharacteristic = null;
                 if (pollInterval) clearInterval(pollInterval);
             }
         }
@@ -145,8 +170,15 @@
             document.getElementById('startButton').disabled = true;
             document.getElementById('stopButton').disabled = true;
             document.getElementById('resetButton').disabled = true;
+            document.getElementById('autoButton').disabled = true;
+            document.getElementById('manualButton').disabled = true;
+            document.getElementById('c6Button').disabled = true;
+            document.getElementById('c16Button').disabled = true;
+            document.getElementById('c32Button').disabled = true;
+            document.getElementById('gfciButton').disabled = true;
             device = null;
             stateCharacteristic = null;
+            commandCharacteristic = null;
         }
 
         function handleStateUpdate(event) {
@@ -181,7 +213,17 @@
         }
 
         async function sendCommand(command) {
-            logMessage('Error: Command characteristic not available in read-only mode');
+            if (!commandCharacteristic) {
+                logMessage('Error: Not connected to command characteristic');
+                return;
+            }
+            try {
+                const data = JSON.stringify({ command });
+                await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+                logMessage(`Sent command: ${command}`);
+            } catch (error) {
+                logMessage(`Command send error: ${error.message}`);
+            }
         }
 
         window.onload = () => {
