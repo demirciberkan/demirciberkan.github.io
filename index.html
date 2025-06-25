@@ -350,7 +350,7 @@
       return true;
     }
 
-	 async function connectBLE() {
+    async function connectBLE() {
       if (!checkBluetoothSupport()) return;
       try {
         logMessage('Requesting Bluetooth device...');
@@ -378,13 +378,13 @@
         document.getElementById('controlButton').disabled = false;
         logMessage('Starting state polling...');
         pollInterval = setInterval(async () => {
-		  try {
-			const value = await stateCharacteristic.readValue();
-			handleStateUpdate({ target: { value } });
-		  } catch (pollError) {
-			logMessage(`Poll error: ${pollError.message}`);
-		  }
-		}, 2000); // Changed from 1000
+          try {
+            const value = await stateCharacteristic.readValue();
+            handleStateUpdate({ target: { value } });
+          } catch (pollError) {
+            logMessage(`Poll error: ${pollError.message}`);
+          }
+        }, 2000); // Increased to 2000ms for stability
         const initialValue = await stateCharacteristic.readValue();
         handleStateUpdate({ target: { value: initialValue } });
       } catch (error) {
@@ -396,8 +396,6 @@
       }
     }
 
-
-   
     async function disconnectBLE() {
       if (pollInterval) {
         clearInterval(pollInterval);
@@ -441,22 +439,21 @@
     }
 
     function handleStateUpdate(event) {
-      function handleStateUpdate(event) {
-	  try {
-		const rawData = new TextDecoder().decode(event.target.value);
-		if (!rawData) {
-		  logMessage("State update error: Empty data received");
-		  return;
-		}
-		const data = JSON.parse(rawData);
+      try {
+        const rawData = new TextDecoder().decode(event.target.value);
+        if (!rawData) {
+          logMessage('State update error: Empty data received');
+          return;
+        }
+        const data = JSON.parse(rawData);
         updateSettingsUI(data);
         let chargeState = document.getElementById('chargeState');
         let cpState = data.cpState.toUpperCase();
         let isStateD = cpState.includes('VENTILATION REQUIRED');
         chargeState.innerText = cpState.includes('NO EV') ? 'NO EV' :
-                          cpState.includes('EV CONNECTED') ? 'CONNECTED' :
-                          cpState.includes('EV CHARGING') ? 'CHARGING' :
-                          isStateD && !data.errorOnStateD ? 'CHARGING' : 'VENTILATION REQUIRED';
+                                cpState.includes('EV CONNECTED') ? 'CONNECTED' :
+                                cpState.includes('EV CHARGING') ? 'CHARGING' :
+                                isStateD && !data.errorOnStateD ? 'CHARGING' : 'VENTILATION REQUIRED';
         chargeState.className = 'charge-state ' + (cpState.includes('NO EV') ? 'no-ev' :
                                                   cpState.includes('EV CONNECTED') ? 'connected' :
                                                   cpState.includes('EV CHARGING') ? 'charging' :
@@ -527,25 +524,25 @@
           sessionLogs.appendChild(tr);
         });
       } catch (error) {
-		logMessage(`State update error: ${error.message} (Raw data: ${rawData})`);
+        logMessage(`State update error: ${error.message} (Raw data: ${rawData})`);
       }
     }
 
     async function sendCommand(cmd) {
-	  if (!device || !device.gatt.connected || !commandCharacteristic) {
-		logMessage('Error: Not connected to device or command characteristic');
-		disconnectBLE();
-		return;
-	  }
-	  try {
-		const data = JSON.stringify({ command: cmd });
-		await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-		logMessage(`Sent command: ${cmd}`);
-	  } catch (error) {
-		logMessage(`Command send error: ${error.message}`);
-		disconnectBLE();
-	  }
-	}
+      if (!device || !device.gatt.connected || !commandCharacteristic) {
+        logMessage('Error: Not connected to device or command characteristic');
+        disconnectBLE();
+        return;
+      }
+      try {
+        const data = JSON.stringify({ command: cmd });
+        await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+        logMessage(`Sent command: ${cmd}`);
+      } catch (error) {
+        logMessage(`Command send error: ${error.message}`);
+        disconnectBLE();
+      }
+    }
 
     function sendControlCommand() {
       let button = document.getElementById('controlButton');
