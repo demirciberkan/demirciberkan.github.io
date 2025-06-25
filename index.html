@@ -1,242 +1,484 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVSE Parker - Web Bluetooth</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { font-size: 24px; }
-        #status { color: red; }
-        button { padding: 10px; margin: 5px; }
-        .info { margin: 10px 0; }
-        .log { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
-        .error { color: red; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EVSEPARKER - Bluetooth</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Arial', sans-serif; background: #f5f7fa; color: #2c3e50; }
+    .container { max-width: 900px; margin: 20px auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    h1 { text-align: center; font-size: 28px; color: #34495e; margin-bottom: 20px; cursor: pointer; position: relative; }
+    h1:hover:after { content: 'Debug'; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); font-size: 12px; color: #7f8c8d; }
+    .connection-status { text-align: center; margin-bottom: 20px; font-size: 18px; }
+    .connection-status.connected { color: #2ecc71; }
+    .connection-status.disconnected { color: #e74c3c; }
+    .error-banner { display: none; background: #e74c3c; color: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 18px; font-weight: bold; border: 2px solid #c0392b; }
+    .error-banner.active { display: block; }
+    .car-section { position: relative; background: url() center/cover no-repeat; border-radius: 10px; padding: 20px; margin-bottom: 20px; height: 300px; display: flex; align-items: center; justify-content: center; }
+    .charge-state { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; padding: 5px 15px; border-radius: 20px; background: rgba(255,255,255,0.9); }
+    .charge-state.no-ev { background: rgba(189,195,199,0.9); color: #fff; }
+    .charge-state.connected { background: rgba(52,152,219,0.9); color: #fff; }
+    .charge-state.charging { background: rgba(46,204,113,0.9); color: #fff; }
+    .charge-state.error { background: rgba(231,76,60,0.9); color: #fff; }
+    .settings-icon, .sessions-icon { position: absolute; top: 10px; font-size: 24px; cursor: pointer; color: #fff; text-shadow: 0 0 5px rgba(0,0,0,0.5); }
+    .settings-icon { right: 10px; }
+    .sessions-icon { left: 10px; }
+    .power-current { position: absolute; bottom: 10px; left: 10px; text-align: left; font-size: 16px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 4px; }
+    .info-line { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #ecf0f1; border-radius: 8px; }
+    .info-line span { flex: 1; text-align: center; font-size: 16px; }
+    .slider-container { margin-bottom: 20px; }
+    .slider { width: 100%; height: 8px; border-radius: 4px; background: #dfe6e9; appearance: none; cursor: pointer; }
+    .slider::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #2ecc71; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .slider-value { text-align: center; font-size: 18px; margin-top: 10px; color: #34495e; }
+    .control-button { display: block; width: 100%; padding: 15px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s; }
+    .control-button.start { background: #2ecc71; color: #fff; }
+    .control-button.start:hover { background: #27ae60; }
+    .control-button.stop { background: #e74c3c; color: #fff; }
+    .control-button.stop:hover { background: #c0392b; }
+    .control-button.reset { background: #7f8c8d; color: #fff; }
+    .control-button.reset:hover { background: #6c757d; }
+    .control-button:disabled { background: #bdc3c7; cursor: not-allowed; }
+    .tab-content { display: none; padding: 20px; background: #fff; border-radius: 8px; }
+    .tab-content.active { display: block; }
+    .settings, .sessions, .debug { margin-top: 20px; }
+    .settings label { display: block; margin: 15px 0 5px; font-size: 16px; }
+    .settings input[type="number"] { padding: 10px; width: 100px; border: 1px solid #dfe6e9; border-radius: 4px; }
+    .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #bdc3c7; transition: 0.3s; border-radius: 34px; }
+    .slider-toggle:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background: #fff; transition: 0.3s; border-radius: 50%; }
+    input:checked + .slider-toggle { background: #2ecc71; }
+    input:checked + .slider-toggle:before { transform: translateX(26px); }
+    .settings button { padding: 10px 20px; background: #2ecc71; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .settings button:hover { background: #27ae60; }
+    .sessions table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .sessions th, .sessions td { border: 1px solid #dfe6e9; padding: 12px; text-align: left; font-size: 14px; }
+    .sessions th { background: #34495e; color: #fff; font-weight: bold; }
+    .sessions td { background: #fafafa; }
+    .sessions tr:nth-child(even) { background: #f0f7fa; }
+    .sessions tr:hover { background: #e0f0f0; }
+    .debug .status p { margin: 5px 0; font-size: 14px; }
+    .debug .controls { margin: 20px 0; }
+    .debug .controls select { padding: 10px; font-size: 14px; width: 200px; border: 1px solid #dfe6e9; border-radius: 4px; margin-bottom: 10px; }
+    .debug .controls button { padding: 10px 15px; margin: 5px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; }
+    .debug .controls button.relay { background: #3498db; color: #fff; }
+    .debug .controls button.relay:hover { background: #2980b9; }
+    .debug .controls button.test { background: #f1c40f; color: #2c3e50; }
+    .debug .controls button.test:hover { background: #e1b107; }
+    .logs { max-height: 200px; overflow-y: auto; background: #ecf0f1; padding: 10px; border-radius: 4px; margin-top: 10px; }
+    .logs p { margin: 2px 0; font-size: 13px; }
+    .back-arrow { font-size: 24px; cursor: pointer; color: #34495e; margin-bottom: 10px; display: inline-block; }
+    .back-arrow:hover { color: #2ecc71; }
+    footer { text-align: center; margin-top: 20px; font-size: 14px; color: #7f8c8d; }
+    .settings input:focus { background-color: #ffffcc; border-color: #3498db; outline: none; }
+    @media (max-width: 600px) {
+      .container { margin: 10px; padding: 15px; }
+      .car-section { height: 250px; }
+      .info-line { flex-direction: column; }
+      .info-line span { text-align: left; margin-bottom: 5px; }
+      .control-button { font-size: 16px; }
+      .settings input[type="number"] { width: 100%; }
+      .debug .controls select { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-    <h1>EVSE Parker Control</h1>
-    <div id="status">Disconnected</div>
-    <div id="bluetoothSupport" class="error" style="display: none;">
-        Web Bluetooth is not supported. Use Chrome or Edge on Windows, macOS, or Android. On Linux, ensure bluez 5.50+ and experimental flags.
+  <div class="container">
+    <h1 onclick="showTab('debug')" title="Click for Debug Mode">EVSEPARKER - Bluetooth</h1>
+    <div class="connection-status disconnected" id="connectionStatus">Disconnected</div>
+    <div id="main" class="tab-content active">
+      <div id="errorBanner" class="error-banner">
+        <strong>Error:</strong> <span id="safetyStatus">Unknown</span> - <span id="errorCause">None</span>
+      </div>
+      <div class="car-section">
+        <div id="chargeState" class="charge-state no-ev">NO EV</div>
+        <div class="settings-icon" onclick="showTab('settings')" title="Settings">⚙</div>
+        <div class="sessions-icon" onclick="showTab('sessions')" title="Sessions">📅</div>
+        <div class="power-current">
+          <p><strong>Power:</strong> <span id="power">0</span> W</p>
+          <p><strong>Current:</strong> <span id="current">0.00</span> A</p>
+        </div>
+      </div>
+      <div class="info-line">
+        <span><strong>Delivered:</strong> <span id="deliveredEnergy">0.000</span> kWh</span>
+        <span><strong>Duration:</strong> <span id="time">0</span></span>
+        <span><strong>Temp:</strong> <span id="temperature">0.00</span> °C</span>
+      </div>
+      <button id="controlButton" class="control-button start" onclick="sendControlCommand()" disabled>Start</button>
     </div>
-    <button id="connectButton" onclick="connectBLE()">Connect to EVSEPARKER</button>
-    <div class="info">
-        <p><strong>State:</strong> <span id="state">Unknown</span></p>
-        <p><strong>CP State:</strong> <span id="cpState">Unknown</span></p>
-        <p><strong>Mode:</strong> <span id="mode">Unknown</span></p>
-        <p><strong>Current:</strong> <span id="currentRMS">0.00</span> A</p>
-        <p><strong>Power:</strong> <span id="power">0.00</span> W</p>
-        <p><strong>Energy:</strong> <span id="energy">0.000</span> kWh</p>
-        <p><strong>Temperature:</strong> <span id="temperature">0.0</span> °C</p>
-        <p><strong>Safety Status:</strong> <span id="safetyStatus">None</span></p>
-        <p><strong>Demo Mode:</strong> <span id="demoMode">False</span></p>
+    <div id="settings" class="tab-content">
+      <div class="back-arrow" onclick="showTab('main')" title="Back to Main">←</div>
+      <div class="settings">
+        <h2>Settings</h2>
+        <div>
+          <label for="errorOnStateD">Error on State D (Ventilation Required):</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="errorOnStateD">
+            <span class="slider-toggle"></span>
+          </label>
+          <span id="errorOnStateDValue">OFF</span>
+        </div>
+        <div class="slider-container">
+          <label for="tempThresholdSlider">Temperature Alarm Threshold (°C):</label>
+          <input type="range" id="tempThresholdSlider" class="slider" min="50" max="80" step="0.5" value="60.0">
+          <div id="tempThresholdValue" class="slider-value">60.0 °C</div>
+        </div>
+        <div class="slider-container">
+          <label for="currentPercentLimitSlider">Current Percentage Limit (%):</label>
+          <input type="range" id="currentPercentLimitSlider" class="slider" min="0" max="30" step="1" value="0">
+          <div id="currentPercentLimitValue" class="slider-value">0%</div>
+        </div>
+        <div class="slider-container">
+          <label for="currentSlider">Charging Current (A):</label>
+          <input type="range" id="currentSlider" class="slider" min="1" max="32" value="6">
+          <div id="currentValue" class="slider-value">6 A (C6)</div>
+        </div>
+        <button onclick="saveSettings()">Save Settings</button>
+      </div>
     </div>
-    <div>
-        <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
-        <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
-        <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
-        <button id="autoButton" onclick="sendCommand('AUTO')" disabled>Auto Mode</button>
-        <button id="manualButton" onclick="sendCommand('MANUAL 10')" disabled>Manual 10% Duty</button>
-        <button id="c6Button" onclick="sendCommand('C6')" disabled>6A</button>
-        <button id="c16Button" onclick="sendCommand('C16')" disabled>16A</button>
-        <button id="c32Button" onclick="sendCommand('C32')" disabled>32A</button>
-        <button id="gfciButton" onclick="sendCommand('TEST_GFCI')" disabled>Test GFCI</button>
+    <div id="sessions" class="tab-content">
+      <div class="back-arrow" onclick="showTab('main')" title="Back to Main">←</div>
+      <div class="sessions">
+        <h2>Charge Sessions (Last 10)</h2>
+        <table>
+          <tr>
+            <th>Duration</th>
+            <th>Energy (kWh)</th>
+            <th>Avg Power (W)</th>
+          </tr>
+          <tbody id="sessionLogs"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="log">
-        <p><strong>Test Logs:</strong></p>
-        <div id="testLogs"></div>
+    <div id="debug" class="tab-content">
+      <div class="back-arrow" onclick="showTab('main')" title="Back to Main">←</div>
+      <div class="debug">
+        <h2>Debug Mode (Service Technician)</h2>
+        <div class="status">
+          <p><strong>Mode:</strong> <span id="modeDebug">Unknown</span></p>
+          <p><strong>CP Duty:</strong> <span id="cpDuty">0.00</span>%</p>
+          <p><strong>CP_IN ADC:</strong> <span id="cpInAdcDebug">0/0</span> (Min/Max)</p>
+          <p><strong>Relays:</strong> <span id="relaysDebug">OFF</span></p>
+          <p><strong>Current:</strong> <span id="currentDebug">0.00</span> A</p>
+          <p><strong>Power:</strong> <span id="powerDebug">0</span> W</p>
+          <p><strong>Phase Status:</strong> <span id="phaseStatus">Unknown</span></p>
+          <p><strong>GFCI Test:</strong> <span id="gfciTestResult">NOT_RUN</span></p>
+          <p><strong>Weld Test:</strong> <span id="phaseWeldTestResult">NOT_OK</span></p>
+          <p><strong>Safety Status:</strong> <span id="safetyStatusDebug">Unknown</span></p>
+          <p><strong>Error Cause:</strong> <span id="errorCauseDebug">None</span></p>
+        </div>
+        <div class="controls">
+          <label for="dutySelect">CP Duty Cycle (%):</label>
+          <select id="dutySelect" onchange="sendCommand('MANUAL ' + this.value)">
+            <option value="0.0">C0 (0%)</option>
+            <option value="13.0">C6 (6A, 13.0%)</option>
+            <option value="17.8">C9 (9A, 17.8%)</option>
+            <option value="19.1">C10 (10A, 19.1%)</option>
+            <option value="29.53">C16 (16A, 29.53%)</option>
+            <option value="56.33">C32 (32A, 56.33%)</option>
+            <option value="100.0">C100 (100.0%)</option>
+          </select>
+          <button class="relay" onclick="sendCommand('RELAY_ON')">Relays On</button>
+          <button class="relay" onclick="sendCommand('RELAY_OFF')">Relays Off</button>
+          <button class="test" onclick="sendCommand('TEST_GFCI')">Run GFCI Test</button>
+          <button class="test" onclick="sendCommand('TEST_PHASE')">Run Phase Test</button>
+          <button class="test" onclick="sendCommand('TEST_WELD')">Run Weld Test</button>
+          <button class="test" onclick="sendCommand('TEST_EARTH_RELAY')">Test Earth Relay</button>
+        </div>
+        <div class="logs">
+          <p><strong>Test Logs:</strong></p>
+          <div id="testLogs"></div>
+        </div>
+      </div>
     </div>
+  </div>
+  <footer>
+    <span id="macAddress">Unknown</span> | <span id="firmwareVersion">Unknown</span>
+  </footer>
+  <script>
+    let device = null;
+    let stateCharacteristic = null;
+    let commandCharacteristic = null;
+    let pollInterval = null;
+    let isEditingSettings = false;
+    let lastCurrentSetting = 'C6';
+    const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+    const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+    const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const currentSettings = [
+      { value: 6, label: 'C6', command: 'C6' },
+      { value: 9, label: 'C9', command: 'C9' },
+      { value: 10, label: 'C10', command: 'C10' },
+      { value: 16, label: 'C16', command: 'C16' },
+      { value: 32, label: 'C32', command: 'C32' }
+    ];
 
-    <script>
-        let device = null;
-        let stateCharacteristic = null;
-        let commandCharacteristic = null;
-        let pollInterval = null;
-        const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-        const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-        const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    function logMessage(message) {
+      console.log(message);
+      const logsDiv = document.getElementById('testLogs');
+      const p = document.createElement('p');
+      p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logsDiv.appendChild(p);
+      logsDiv.scrollTop = logsDiv.scrollHeight;
+    }
 
-        function logMessage(message) {
-            console.log(message);
-            const logsDiv = document.getElementById('testLogs');
-            const p = document.createElement('p');
-            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logsDiv.appendChild(p);
-            logsDiv.scrollTop = logsDiv.scrollHeight;
+    function checkBluetoothSupport() {
+      if (!navigator.bluetooth) {
+        alert('Web Bluetooth is not supported. Use Chrome or Edge on Windows, macOS, or Android. On Linux, ensure bluez 5.50+ and experimental flags.');
+        return false;
+      }
+      navigator.bluetooth.getAvailability().then(available => {
+        logMessage(`Bluetooth available: ${available}`);
+      });
+      return true;
+    }
+
+    async function connectBLE() {
+      if (!checkBluetoothSupport()) return;
+      try {
+        logMessage('Requesting Bluetooth device...');
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'EVSEPARKER' }],
+          optionalServices: [serviceUUID]
+        });
+        document.getElementById('connectionStatus').textContent = 'Connecting...';
+        logMessage('Connecting to GATT server...');
+        const server = await Promise.race([
+          device.gatt.connect(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('GATT connection timeout')), 10000))
+        ]);
+        logMessage('Connected to GATT server');
+        const service = await server.getPrimaryService(serviceUUID);
+        logMessage('Service found');
+        stateCharacteristic = await service.getCharacteristic(stateUUID);
+        logMessage('State characteristic accessed');
+        commandCharacteristic = await service.getCharacteristic(commandUUID);
+        logMessage('Command characteristic accessed');
+        document.getElementById('connectionStatus').textContent = 'Connected';
+        document.getElementById('connectionStatus').className = 'connection-status connected';
+        document.getElementById('controlButton').disabled = false;
+        logMessage('Starting state polling...');
+        pollInterval = setInterval(async () => {
+          try {
+            const value = await stateCharacteristic.readValue();
+            handleStateUpdate({ target: { value } });
+          } catch (pollError) {
+            logMessage(`Poll error: ${pollError.message}`);
+          }
+        }, 1000);
+        const initialValue = await stateCharacteristic.readValue();
+        handleStateUpdate({ target: { value: initialValue } });
+      } catch (error) {
+        document.getElementById('connectionStatus').textContent = `Connection Failed: ${error.message}`;
+        logMessage(`Connection error: ${error.message}`);
+        disconnectBLE();
+      }
+    }
+
+    async function disconnectBLE() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        logMessage('Stopped state polling');
+      }
+      if (device && device.gatt.connected) {
+        await device.gatt.disconnect();
+        logMessage('Disconnected from device');
+      }
+      document.getElementById('connectionStatus').textContent = 'Disconnected';
+      document.getElementById('connectionStatus').className = 'connection-status disconnected';
+      document.getElementById('controlButton').disabled = true;
+      device = null;
+      stateCharacteristic = null;
+      commandCharacteristic = null;
+    }
+
+    function formatDuration(seconds) {
+      if (seconds < 60) return seconds + ' s';
+      return Math.floor(seconds / 60) + ' min';
+    }
+
+    function updateSettingsUI(data) {
+      if (isEditingSettings) return;
+      document.getElementById('errorOnStateD').checked = data.errorOnStateD;
+      document.getElementById('errorOnStateDValue').innerText = data.errorOnStateD ? 'ON' : 'OFF';
+      let tempSlider = document.getElementById('tempThresholdSlider');
+      tempSlider.value = data.tempThreshold;
+      document.getElementById('tempThresholdValue').innerText = data.tempThreshold.toFixed(1) + ' °C';
+      let limitSlider = document.getElementById('currentPercentLimitSlider');
+      limitSlider.value = data.currentPercentLimit;
+      document.getElementById('currentPercentLimitValue').innerText = data.currentPercentLimit + '%';
+      let currentSlider = document.getElementById('currentSlider');
+      let currentValue = currentSettings.find(s => s.command === data.currentSetting)?.value || 6;
+      currentSlider.value = currentValue;
+      document.getElementById('currentValue').innerText = `${currentValue} A (${data.currentSetting})`;
+      lastCurrentSetting = data.currentSetting;
+    }
+
+    function handleStateUpdate(event) {
+      try {
+        const data = JSON.parse(new TextDecoder().decode(event.target.value));
+        updateSettingsUI(data);
+        let chargeState = document.getElementById('chargeState');
+        let cpState = data.cpState.toUpperCase();
+        let isStateD = cpState.includes('VENTILATION REQUIRED');
+        chargeState.innerText = cpState.includes('NO EV') ? 'NO EV' :
+                                cpState.includes('EV CONNECTED') ? 'CONNECTED' :
+                                cpState.includes('EV CHARGING') ? 'CHARGING' :
+                                isStateD && !data.errorOnStateD ? 'CHARGING' : 'VENTILATION REQUIRED';
+        chargeState.className = 'charge-state ' + (cpState.includes('NO EV') ? 'no-ev' :
+                                                  cpState.includes('EV CONNECTED') ? 'connected' :
+                                                  cpState.includes('EV CHARGING') ? 'charging' :
+                                                  isStateD && !data.errorOnStateD ? 'charging' : 'error');
+        let errorBanner = document.getElementById('errorBanner');
+        let isStateDError = isStateD && !data.errorOnStateD;
+        if (data.state.toUpperCase() === 'ERROR' && !isStateDError) {
+          errorBanner.classList.add('active');
+          document.getElementById('safetyStatus').innerText = data.safetyStatus || 'Unknown';
+          document.getElementById('errorCause').innerText = data.errorCause || 'None';
+        } else {
+          errorBanner.classList.remove('active');
         }
-
-        function checkBluetoothSupport() {
-            if (!navigator.bluetooth) {
-                document.getElementById('bluetoothSupport').style.display = 'block';
-                document.getElementById('connectButton').disabled = true;
-                logMessage('Web Bluetooth API not supported. Use Chrome or Edge on a supported OS. On Linux, ensure bluez 5.50+ and experimental flags.');
-                return false;
-            }
-            navigator.bluetooth.getAvailability().then(available => {
-                logMessage(`Bluetooth available: ${available}`);
-            });
-            return true;
+        document.getElementById('power').innerText = data.power;
+        document.getElementById('current').innerText = data.currentRMS.toFixed(2);
+        document.getElementById('deliveredEnergy').innerText = data.deliveredEnergy.toFixed(3);
+        document.getElementById('time').innerText = formatDuration(data.time);
+        document.getElementById('temperature').innerText = data.temperature.toFixed(2);
+        document.getElementById('macAddress').innerText = data.macAddress;
+        document.getElementById('firmwareVersion').innerText = data.firmwareVersion;
+        let controlButton = document.getElementById('controlButton');
+        if (data.state.toUpperCase() === 'ERROR' && data.resetButtonEnabled) {
+          controlButton.innerText = 'Reset';
+          controlButton.className = 'control-button reset';
+          controlButton.disabled = false;
+        } else if (data.state.toUpperCase() === 'CHARGING' && data.stopButtonEnabled) {
+          controlButton.innerText = 'Stop';
+          controlButton.className = 'control-button stop';
+          controlButton.disabled = false;
+        } else if (data.startButtonEnabled) {
+          controlButton.innerText = 'Start';
+          controlButton.className = 'control-button start';
+          controlButton.disabled = false;
+        } else {
+          controlButton.innerText = data.state.toUpperCase() === 'CHARGING' ? 'Stop' : 'Start';
+          controlButton.className = 'control-button ' + (data.state.toUpperCase() === 'CHARGING' ? 'stop' : 'start');
+          controlButton.disabled = true;
         }
+        document.getElementById('modeDebug').innerText = data.mode;
+        document.getElementById('cpDuty').innerText = data.currentDuty.toFixed(2);
+        document.getElementById('cpInAdcDebug').innerText = `${data.cpInMinAdc}/${data.cpInMaxAdc}`;
+        document.getElementById('relaysDebug').innerText = data.relays;
+        document.getElementById('currentDebug').innerText = data.currentRMS.toFixed(2);
+        document.getElementById('powerDebug').innerText = data.power;
+        document.getElementById('phaseStatus').innerText = data.phaseStatus;
+        document.getElementById('gfciTestResult').innerText = data.gfciTestResult;
+        document.getElementById('phaseWeldTestResult').innerText = data.phaseWeldTestResult;
+        document.getElementById('safetyStatusDebug').innerText = data.safetyStatus;
+        document.getElementById('errorCauseDebug').innerText = data.errorCause;
+        document.getElementById('dutySelect').value = data.currentDuty.toFixed(2);
+        let testLogs = document.getElementById('testLogs');
+        testLogs.innerHTML = '';
+        let reversedLogs = [...data.testLogs].reverse();
+        reversedLogs.forEach(log => {
+          let p = document.createElement('p');
+          p.innerText = log;
+          testLogs.appendChild(p);
+        });
+        let sessionLogs = document.getElementById('sessionLogs');
+        sessionLogs.innerHTML = '';
+        data.sessionLogs.forEach(session => {
+          let tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatDuration(session.duration)}</td>
+            <td>${session.energy.toFixed(3)}</td>
+            <td>${Math.round(session.avgPower)}</td>
+          `;
+          sessionLogs.appendChild(tr);
+        });
+      } catch (error) {
+        logMessage(`State update error: ${error.message}`);
+      }
+    }
 
-        async function connectBLE() {
-            if (!checkBluetoothSupport()) return;
+    async function sendCommand(cmd) {
+      if (!commandCharacteristic) {
+        logMessage('Error: Not connected to command characteristic');
+        return;
+      }
+      try {
+        const data = JSON.stringify({ command: cmd });
+        await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+        logMessage(`Sent command: ${cmd}`);
+      } catch (error) {
+        logMessage(`Command send error: ${error.message}`);
+      }
+    }
 
-            try {
-                logMessage('Requesting Bluetooth device...');
-                device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'EVSEPARKER' }],
-                    optionalServices: [serviceUUID]
-                });
-                document.getElementById('status').textContent = 'Connecting...';
-                logMessage('Connecting to GATT server...');
-                const server = await Promise.race([
-                    device.gatt.connect(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('GATT connection timeout')), 10000))
-                ]);
-                logMessage('Connected to GATT server');
-                const service = await server.getPrimaryService(serviceUUID);
-                logMessage('Service found');
-                try {
-                    logMessage('Accessing state characteristic...');
-                    stateCharacteristic = await service.getCharacteristic(stateUUID);
-                    logMessage('State characteristic accessed');
-                    logMessage(`State characteristic UUID: ${stateCharacteristic.uuid}`);
-                } catch (stateError) {
-                    logMessage(`State characteristic error: ${stateError.message}`);
-                    throw new Error(`State characteristic error: ${stateError.message}`);
-                }
-                try {
-                    logMessage('Accessing command characteristic...');
-                    commandCharacteristic = await service.getCharacteristic(commandUUID);
-                    logMessage('Command characteristic accessed');
-                    logMessage(`Command characteristic UUID: ${commandCharacteristic.uuid}`);
-                } catch (cmdError) {
-                    logMessage(`Command characteristic error: ${cmdError.message}`);
-                    throw new Error(`Command characteristic error: ${cmdError.message}`);
-                }
-                document.getElementById('status').textContent = 'Connected (Polling)';
-                document.getElementById('status').style.color = 'green';
-                document.getElementById('connectButton').textContent = 'Disconnect';
-                document.getElementById('connectButton').onclick = disconnectBLE;
-                logMessage('Starting state polling...');
-                pollInterval = setInterval(async () => {
-                    try {
-                        const value = await stateCharacteristic.readValue();
-                        const raw = new TextDecoder().decode(value);
-                        logMessage(`Raw value: ${raw}`);
-                        handleStateUpdate({ target: { value } });
-                    } catch (pollError) {
-                        logMessage(`Poll error: ${pollError.message}`);
-                    }
-                }, 1000);
-                const initialValue = await stateCharacteristic.readValue();
-                const rawInitial = new TextDecoder().decode(initialValue);
-                logMessage(`Raw initial value: ${rawInitial}`);
-                handleStateUpdate({ target: { value: initialValue } });
-                document.getElementById('startButton').disabled = false;
-                document.getElementById('stopButton').disabled = false;
-                document.getElementById('resetButton').disabled = false;
-                document.getElementById('autoButton').disabled = false;
-                document.getElementById('manualButton').disabled = false;
-                document.getElementById('c6Button').disabled = false;
-                document.getElementById('c16Button').disabled = false;
-                document.getElementById('c32Button').disabled = false;
-                document.getElementById('gfciButton').disabled = false;
-            } catch (error) {
-                document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
-                logMessage(`Connection error: ${error.message}`);
-                device = null;
-                stateCharacteristic = null;
-                commandCharacteristic = null;
-                if (pollInterval) clearInterval(pollInterval);
-            }
-        }
+    function sendControlCommand() {
+      let button = document.getElementById('controlButton');
+      if (button.innerText === 'Reset') sendCommand('RESET');
+      else if (button.innerText === 'Stop') sendCommand('STOP');
+      else if (button.innerText === 'Start') sendCommand('START');
+    }
 
-        async function disconnectBLE() {
-            if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                logMessage('Stopped state polling');
-            }
-            if (device && device.gatt.connected) {
-                await device.gatt.disconnect();
-                logMessage('Disconnected from device');
-            }
-            document.getElementById('status').textContent = 'Disconnected';
-            document.getElementById('status').style.color = 'red';
-            document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
-            document.getElementById('connectButton').onclick = connectBLE;
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = true;
-            document.getElementById('resetButton').disabled = true;
-            document.getElementById('autoButton').disabled = true;
-            document.getElementById('manualButton').disabled = true;
-            document.getElementById('c6Button').disabled = true;
-            document.getElementById('c16Button').disabled = true;
-            document.getElementById('c32Button').disabled = true;
-            document.getElementById('gfciButton').disabled = true;
-            device = null;
-            stateCharacteristic = null;
-            commandCharacteristic = null;
-        }
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (tabId === 'debug') {
+        sendCommand('MANUAL 0');
+      } else if (tabId === 'main') {
+        sendCommand('AUTO');
+      }
+    }
 
-        function handleStateUpdate(event) {
-            try {
-                const value = new TextDecoder().decode(event.target.value);
-                const data = JSON.parse(value);
-                logMessage('Received state update');
-                document.getElementById('state').textContent = data.state || 'Unknown';
-                document.getElementById('cpState').textContent = data.cpState || 'Unknown';
-                document.getElementById('mode').textContent = data.mode || 'Unknown';
-                document.getElementById('currentRMS').textContent = (data.currentRMS || 0).toFixed(2);
-                document.getElementById('power').textContent = (data.power || 0).toFixed(2);
-                document.getElementById('energy').textContent = (data.deliveredEnergy || 0).toFixed(3);
-                document.getElementById('temperature').textContent = (data.temperature || 0).toFixed(1);
-                document.getElementById('safetyStatus').textContent = data.safetyStatus || 'None';
-                document.getElementById('demoMode').textContent = data.demoMode ? 'True' : 'False';
-                document.getElementById('startButton').disabled = !data.startButtonEnabled;
-                document.getElementById('stopButton').disabled = !data.stopButtonEnabled;
-                document.getElementById('resetButton').disabled = !data.resetButtonEnabled;
-                const logsDiv = document.getElementById('testLogs');
-                logsDiv.innerHTML = '<p><strong>Test Logs:</strong></p>';
-                if (data.testLogs) {
-                    data.testLogs.forEach(log => {
-                        const p = document.createElement('p');
-                        p.textContent = log;
-                        logsDiv.appendChild(p);
-                    });
-                }
-            } catch (error) {
-                logMessage(`State update error: ${error.message}`);
-            }
-        }
+    function updateSliderValue(value) {
+      let setting = currentSettings.find(s => s.value <= value) || currentSettings[0];
+      if (value > 32) setting = currentSettings[currentSettings.length - 1];
+      else if (value > 16) setting = currentSettings.find(s => s.value === 32);
+      else if (value > 10) setting = currentSettings.find(s => s.value === 16);
+      else if (value > 9) setting = currentSettings.find(s => s.value === 10);
+      else if (value > 6) setting = currentSettings.find(s => s.value === 9);
+      document.getElementById('currentValue').innerText = `${value} A (${setting.label})`;
+      lastCurrentSetting = setting.command;
+      sendCommand(setting.command);
+    }
 
-        async function sendCommand(command) {
-            if (!commandCharacteristic) {
-                logMessage('Error: Not connected to command characteristic');
-                return;
-            }
-            try {
-                const data = JSON.stringify({ command });
-                await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-                logMessage(`Sent command: ${command}`);
-            } catch (error) {
-                logMessage(`Command send error: ${error.message}`);
-            }
-        }
+    function saveSettings() {
+      let errorOnStateD = document.getElementById('errorOnStateD').checked;
+      let tempThreshold = parseFloat(document.getElementById('tempThresholdSlider').value);
+      let currentPercentLimit = parseInt(document.getElementById('currentPercentLimitSlider').value);
+      if (isNaN(tempThreshold) || tempThreshold < 50.0 || tempThreshold > 80.0) {
+        alert('Temperature threshold must be between 50.0 and 80.0 °C');
+        return;
+      }
+      if (isNaN(currentPercentLimit) || currentPercentLimit < 0 || currentPercentLimit > 30) {
+        alert('Current percentage limit must be between 0 and 30%');
+        return;
+      }
+      isEditingSettings = true;
+      document.getElementById('errorOnStateDValue').innerText = errorOnStateD ? 'ON' : 'OFF';
+      document.getElementById('tempThresholdValue').innerText = tempThreshold.toFixed(1) + ' °C';
+      document.getElementById('currentPercentLimitValue').innerText = currentPercentLimit + '%';
+      sendCommand(`SETTINGS ${errorOnStateD} ${tempThreshold.toFixed(1)} ${currentPercentLimit}`);
+      setTimeout(() => { isEditingSettings = false; }, 500);
+    }
 
-        window.onload = () => {
-            checkBluetoothSupport();
-            if (navigator.bluetooth) {
-                navigator.bluetooth.addEventListener('availabilitychanged', (event) => {
-                    logMessage(`Bluetooth availability: ${event.value}`);
-                    if (!event.value) {
-                        disconnectBLE();
-                    }
-                });
-            }
-        };
-    </script>
+    document.getElementById('currentSlider').addEventListener('change', function() {
+      updateSliderValue(this.value);
+    });
+    document.getElementById('tempThresholdSlider').addEventListener('input', function() {
+      document.getElementById('tempThresholdValue').innerText = this.value + ' °C';
+    });
+    document.getElementById('currentPercentLimitSlider').addEventListener('input', function() {
+      document.getElementById('currentPercentLimitValue').innerText = this.value + '%';
+    });
+
+    window.onload = () => {
+      if (checkBluetoothSupport()) {
+        connectBLE();
+      }
+    };
+  </script>
 </body>
 </html>
