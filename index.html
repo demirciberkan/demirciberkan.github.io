@@ -378,13 +378,13 @@
         document.getElementById('controlButton').disabled = false;
         logMessage('Starting state polling...');
         pollInterval = setInterval(async () => {
-          try {
-            const value = await stateCharacteristic.readValue();
-            handleStateUpdate({ target: { value } });
-          } catch (pollError) {
-            logMessage(`Poll error: ${pollError.message}`);
-          }
-        }, 1000);
+		  try {
+			const value = await stateCharacteristic.readValue();
+			handleStateUpdate({ target: { value } });
+		  } catch (pollError) {
+			logMessage(`Poll error: ${pollError.message}`);
+		  }
+		}, 2000); // Changed from 1000
         const initialValue = await stateCharacteristic.readValue();
         handleStateUpdate({ target: { value: initialValue } });
       } catch (error) {
@@ -439,8 +439,14 @@
     }
 
     function handleStateUpdate(event) {
-      try {
-        const data = JSON.parse(new TextDecoder().decode(event.target.value));
+      function handleStateUpdate(event) {
+	  try {
+		const rawData = new TextDecoder().decode(event.target.value);
+		if (!rawData) {
+		  logMessage("State update error: Empty data received");
+		  return;
+		}
+		const data = JSON.parse(rawData);
         updateSettingsUI(data);
         let chargeState = document.getElementById('chargeState');
         let cpState = data.cpState.toUpperCase();
@@ -519,23 +525,25 @@
           sessionLogs.appendChild(tr);
         });
       } catch (error) {
-        logMessage(`State update error: ${error.message}`);
+		logMessage(`State update error: ${error.message} (Raw data: ${rawData})`);
       }
     }
 
     async function sendCommand(cmd) {
-      if (!commandCharacteristic) {
-        logMessage('Error: Not connected to command characteristic');
-        return;
-      }
-      try {
-        const data = JSON.stringify({ command: cmd });
-        await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-        logMessage(`Sent command: ${cmd}`);
-      } catch (error) {
-        logMessage(`Command send error: ${error.message}`);
-      }
-    }
+	  if (!device || !device.gatt.connected || !commandCharacteristic) {
+		logMessage('Error: Not connected to device or command characteristic');
+		disconnectBLE();
+		return;
+	  }
+	  try {
+		const data = JSON.stringify({ command: cmd });
+		await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+		logMessage(`Sent command: ${cmd}`);
+	  } catch (error) {
+		logMessage(`Command send error: ${error.message}`);
+		disconnectBLE();
+	  }
+	}
 
     function sendControlCommand() {
       let button = document.getElementById('controlButton');
