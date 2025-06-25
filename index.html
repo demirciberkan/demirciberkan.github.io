@@ -152,8 +152,8 @@
 <body>
   <div class="container">
     <div class="connection-status disconnected" id="connectionStatus">Disconnected</div>
-    <button id="connectButton" class="control-button start" onclick="connectBLE()">Connect to BLE Device</button>
-    <button id="disconnectButton" class="control-button stop" onclick="disconnectBLE()" disabled>Disconnect</button>
+    <button id="connectButton" class="control-button start">Connect to BLE Device</button>
+    <button id="disconnectButton" class="control-button stop" disabled>Disconnect</button>
     <div class="charge-state no-ev" id="chargeState">NO EV</div>
     <div class="error-banner" id="errorBanner">
       <p><strong>Safety Status:</strong> <span id="safetyStatus">Unknown</span></p>
@@ -191,10 +191,10 @@
     </div>
     <button id="controlButton" class="control-button start" disabled>Start</button>
     <div class="tabs">
-      <div class="tab active" onclick="showTab('main')">Main</div>
-      <div class="tab" onclick="showTab('settings')">Settings</div>
-      <div class="tab" onclick="showTab('sessions')">Sessions</div>
-      <div class="tab" onclick="showTab('debug')">Debug</div>
+      <div class="tab active" data-tab="main">Main</div>
+      <div class="tab" data-tab="settings">Settings</div>
+      <div class="tab" data-tab="sessions">Sessions</div>
+      <div class="tab" data-tab="debug">Debug</div>
     </div>
     <div id="main" class="tab-content active">
       <p>Control your EVSEPARKER charging station.</p>
@@ -225,7 +225,7 @@
           <span id="currentPercentLimitValue">0%</span>
         </div>
       </div>
-      <button class="control-button start" onclick="saveSettings()">Save Settings</button>
+      <button class="control-button start" id="saveSettingsButton">Save Settings</button>
     </div>
     <div id="sessions" class="tab-content">
       <table>
@@ -300,19 +300,20 @@
             <option value="90">90</option>
             <option value="100">100</option>
           </select>
-          <button class="control-button start" onclick="sendCommand(`MANUAL ${document.getElementById('dutySelect').value}`)">Set Duty</button>
+          <button class="control-button start" id="setDutyButton">Set Duty</button>
         </div>
       </div>
-      <button class="control-button start" onclick="sendCommand('RELAY_ON')">Relay ON</button>
-      <button class="control-button stop" onclick="sendCommand('RELAY_OFF')">Relay OFF</button>
-      <button class="control-button start" onclick="sendCommand('TEST_GFCI')">Test GFCI</button>
-      <button class="control-button start" onclick="sendCommand('TEST_PHASE')">Test Phase</button>
-      <button class="control-button start" onclick="sendCommand('TEST_WELD')">Test Weld</button>
-      <button class="control-button start" onclick="sendCommand('TEST_EARTH_RELAY')">Test Earth Relay</button>
+      <button class="control-button start" id="relayOnButton">Relay ON</button>
+      <button class="control-button stop" id="relayOffButton">Relay OFF</button>
+      <button class="control-button start" id="testGfciButton">Test GFCI</button>
+      <button class="control-button start" id="testPhaseButton">Test Phase</button>
+      <button class="control-button start" id="testWeldButton">Test Weld</button>
+      <button class="control-button start" id="testEarthRelayButton">Test Earth Relay</button>
       <div class="logs" id="testLogs"></div>
     </div>
   </div>
   <script>
+    console.log('Script loaded');
     let device = null;
     let stateCharacteristic = null;
     let commandCharacteristic = null;
@@ -384,7 +385,7 @@
           } catch (pollError) {
             logMessage(`Poll error: ${pollError.message}`);
           }
-        }, 2000); // Increased to 2000ms for stability
+        }, 2000);
         const initialValue = await stateCharacteristic.readValue();
         handleStateUpdate({ target: { value: initialValue } });
       } catch (error) {
@@ -425,11 +426,9 @@
       if (isEditingSettings) return;
       document.getElementById('errorOnStateD').checked = data.errorOnStateD;
       document.getElementById('errorOnStateDValue').innerText = data.errorOnStateD ? 'ON' : 'OFF';
-      let tempSlider = document.getElementById('tempThresholdSlider');
-      tempSlider.value = data.tempThreshold;
+      document.getElementById('tempThresholdSlider').value = data.tempThreshold;
       document.getElementById('tempThresholdValue').innerText = data.tempThreshold.toFixed(1) + ' °C';
-      let limitSlider = document.getElementById('currentPercentLimitSlider');
-      limitSlider.value = data.currentPercentLimit;
+      document.getElementById('currentPercentLimitSlider').value = data.currentPercentLimit;
       document.getElementById('currentPercentLimitValue').innerText = data.currentPercentLimit + '%';
       let currentSlider = document.getElementById('currentSlider');
       let currentValue = currentSettings.find(s => s.command === data.currentSetting)?.value || 6;
@@ -439,8 +438,9 @@
     }
 
     function handleStateUpdate(event) {
+      let rawData = '';
       try {
-        const rawData = new TextDecoder().decode(event.target.value);
+        rawData = new TextDecoder().decode(event.target.value);
         if (!rawData) {
           logMessage('State update error: Empty data received');
           return;
@@ -451,13 +451,13 @@
         let cpState = data.cpState.toUpperCase();
         let isStateD = cpState.includes('VENTILATION REQUIRED');
         chargeState.innerText = cpState.includes('NO EV') ? 'NO EV' :
-                                cpState.includes('EV CONNECTED') ? 'CONNECTED' :
-                                cpState.includes('EV CHARGING') ? 'CHARGING' :
-                                isStateD && !data.errorOnStateD ? 'CHARGING' : 'VENTILATION REQUIRED';
+                               cpState.includes('EV CONNECTED') ? 'CONNECTED' :
+                               cpState.includes('EV CHARGING') ? 'CHARGING' :
+                               isStateD && !data.errorOnStateD ? 'CHARGING' : 'VENTILATION REQUIRED';
         chargeState.className = 'charge-state ' + (cpState.includes('NO EV') ? 'no-ev' :
-                                                  cpState.includes('EV CONNECTED') ? 'connected' :
-                                                  cpState.includes('EV CHARGING') ? 'charging' :
-                                                  isStateD && !data.errorOnStateD ? 'charging' : 'error');
+                                                 cpState.includes('EV CONNECTED') ? 'connected' :
+                                                 cpState.includes('EV CHARGING') ? 'charging' :
+                                                 isStateD && !data.errorOnStateD ? 'charging' : 'error');
         let errorBanner = document.getElementById('errorBanner');
         let isStateDError = isStateD && !data.errorOnStateD;
         if (data.state.toUpperCase() === 'ERROR' && !isStateDError) {
@@ -555,7 +555,7 @@
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-      document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
       if (tabId === 'debug') {
         sendCommand('MANUAL 0');
       } else if (tabId === 'main') {
@@ -595,7 +595,20 @@
       setTimeout(() => { isEditingSettings = false; }, 500);
     }
 
+    // Event Listeners
+    document.getElementById('connectButton').addEventListener('click', connectBLE);
+    document.getElementById('disconnectButton').addEventListener('click', disconnectBLE);
     document.getElementById('controlButton').addEventListener('click', sendControlCommand);
+    document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
+    document.getElementById('setDutyButton').addEventListener('click', () => {
+      sendCommand(`MANUAL ${document.getElementById('dutySelect').value}`);
+    });
+    document.getElementById('relayOnButton').addEventListener('click', () => sendCommand('RELAY_ON'));
+    document.getElementById('relayOffButton').addEventListener('click', () => sendCommand('RELAY_OFF'));
+    document.getElementById('testGfciButton').addEventListener('click', () => sendCommand('TEST_GFCI'));
+    document.getElementById('testPhaseButton').addEventListener('click', () => sendCommand('TEST_PHASE'));
+    document.getElementById('testWeldButton').addEventListener('click', () => sendCommand('TEST_WELD'));
+    document.getElementById('testEarthRelayButton').addEventListener('click', () => sendCommand('TEST_EARTH_RELAY'));
     document.getElementById('currentSlider').addEventListener('change', function() {
       updateSliderValue(this.value);
     });
@@ -604,6 +617,9 @@
     });
     document.getElementById('currentPercentLimitSlider').addEventListener('input', function() {
       document.getElementById('currentPercentLimitValue').innerText = this.value + '%';
+    });
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => showTab(tab.getAttribute('data-tab')));
     });
   </script>
 </body>
