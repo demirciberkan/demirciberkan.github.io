@@ -147,6 +147,45 @@
       .settings-grid { grid-template-columns: 1fr; }
       .status-grid { grid-template-columns: 1fr; }
     }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider.round {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider.round:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #5cb85c;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
   </style>
 </head>
 <body>
@@ -384,8 +423,9 @@
             handleStateUpdate({ target: { value } });
           } catch (pollError) {
             logMessage(`Poll error: ${pollError.message}`);
+            reconnectBLE();
           }
-        }, 2000);
+        }, 3000);
         const initialValue = await stateCharacteristic.readValue();
         handleStateUpdate({ target: { value: initialValue } });
       } catch (error) {
@@ -415,6 +455,29 @@
       device = null;
       stateCharacteristic = null;
       commandCharacteristic = null;
+    }
+
+    async function reconnectBLE() {
+      logMessage('Attempting to reconnect...');
+      await disconnectBLE();
+      setTimeout(connectBLE, 1000);
+    }
+
+    async function sendCommand(cmd) {
+      if (!device || !device.gatt.connected || !commandCharacteristic) {
+        logMessage('Error: Not connected to device or command characteristic');
+        reconnectBLE();
+        return;
+      }
+      try {
+        const data = JSON.stringify({ command: cmd });
+        logMessage(`Sending command: ${data}`);
+        await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+        logMessage(`Sent command: ${cmd}`);
+      } catch (error) {
+        logMessage(`Command send error: ${error.message}`);
+        reconnectBLE();
+      }
     }
 
     function formatDuration(seconds) {
@@ -503,14 +566,16 @@
         document.getElementById('phaseWeldTestResult').innerText = data.phaseWeldTestResult;
         document.getElementById('safetyStatusDebug').innerText = data.safetyStatus;
         document.getElementById('errorCauseDebug').innerText = data.errorCause;
-        document.getElementById('dutySelect').value = data.currentDuty.toFixed(2);
+        document.getElementById('dutySelect').value = data.currentDuty.toFixed(0);
         let testLogs = document.getElementById('testLogs');
         testLogs.innerHTML = '';
         let reversedLogs = [...data.testLogs].reverse();
         reversedLogs.forEach(log => {
-          let p = document.createElement('p');
-          p.innerText = log;
-          testLogs.appendChild(p);
+          if (log) {
+            let p = document.createElement('p');
+            p.innerText = log;
+            testLogs.appendChild(p);
+          }
         });
         let sessionLogs = document.getElementById('sessionLogs');
         sessionLogs.innerHTML = '';
@@ -525,22 +590,6 @@
         });
       } catch (error) {
         logMessage(`State update error: ${error.message} (Raw data: ${rawData})`);
-      }
-    }
-
-    async function sendCommand(cmd) {
-      if (!device || !device.gatt.connected || !commandCharacteristic) {
-        logMessage('Error: Not connected to device or command characteristic');
-        disconnectBLE();
-        return;
-      }
-      try {
-        const data = JSON.stringify({ command: cmd });
-        await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-        logMessage(`Sent command: ${cmd}`);
-      } catch (error) {
-        logMessage(`Command send error: ${error.message}`);
-        disconnectBLE();
       }
     }
 
