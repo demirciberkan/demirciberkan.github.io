@@ -47,6 +47,10 @@
 
     async function connectToDevice() {
       try {
+        if (!navigator.bluetooth) {
+          throw new Error('Web Bluetooth not supported in this browser.');
+        }
+        document.getElementById('connectionStatus').textContent = 'Scanning...';
         device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'EVSEPARKER' }],
           optionalServices: [serviceUUID]
@@ -57,14 +61,31 @@
         const service = await server.getPrimaryService(serviceUUID);
         stateChar = await service.getCharacteristic(stateUUID);
         commandChar = await service.getCharacteristic(commandUUID);
-        await stateChar.startNotifications();
-        stateChar.addEventListener('characteristicvaluechanged', handleStateUpdate);
+        try {
+          await stateChar.startNotifications();
+          stateChar.addEventListener('characteristicvaluechanged', handleStateUpdate);
+        } catch (e) {
+          console.warn('Notifications failed, trying read:', e);
+          await readStateManually(); // Fallback
+        }
         device.addEventListener('gattserverdisconnected', () => {
           document.getElementById('connectionStatus').textContent = 'Disconnected';
           document.getElementById('connectButton').disabled = false;
         });
       } catch (error) {
         document.getElementById('connectionStatus').textContent = `Error: ${error}`;
+        console.error('Connection error:', error);
+      }
+    }
+
+    async function readStateManually() {
+      if (!stateChar) return;
+      try {
+        const value = await stateChar.readValue();
+        handleStateUpdate({ target: { value } });
+        setTimeout(readStateManually, 2000); // Poll every 2s
+      } catch (e) {
+        console.error('Read error:', e);
       }
     }
 
