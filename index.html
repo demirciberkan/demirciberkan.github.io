@@ -304,6 +304,65 @@
         }
     }
 
+    // **FIX**: This function now uses the compact BLE keys (e.g., 'st', 'pwr')
+    function updateUI(data) {
+        if (!data) return;
+
+        // Main Dashboard
+        document.getElementById('power').innerText = Math.round(data.pwr || 0);
+        document.getElementById('current').innerText = (data.crms || 0.0).toFixed(2);
+        document.getElementById('deliveredEnergy').innerText = (data.de || 0.0).toFixed(3);
+        document.getElementById('time').innerText = formatDuration(data.t);
+        document.getElementById('temperature').innerText = (data.tmp || 0.0).toFixed(1);
+
+        // Charge State
+        const chargeStateEl = document.getElementById('chargeState');
+        const stateMap = { 0: 'NO EV', 1: 'CONNECTED', 2: 'CHARGING', 3: 'ERROR' };
+        const classMap = { 0: 'state-no-ev', 1: 'state-connected', 2: 'state-charging', 3: 'state-error' };
+        chargeStateEl.textContent = stateMap[data.st] || 'UNKNOWN';
+        chargeStateEl.className = 'charge-state ' + (classMap[data.st] || 'state-no-ev');
+
+        // Error Banner
+        const errorBanner = document.getElementById('errorBanner');
+        if (data.st === 3) {
+            errorBanner.textContent = `Error: ${data.ec || 'Unknown'}`;
+            errorBanner.classList.add('active');
+        } else {
+            errorBanner.classList.remove('active');
+        }
+
+        // Control Button
+        const controlButton = document.getElementById('controlButton');
+        if (!isAuthenticated) {
+            controlButton.textContent = 'LOGIN REQUIRED';
+            controlButton.disabled = true;
+        } else if (data.st === 3) {
+            controlButton.textContent = 'Reset';
+            controlButton.className = 'control-button reset';
+            controlButton.disabled = false;
+        } else {
+            controlButton.textContent = data.us ? 'Start' : 'Stop';
+            controlButton.className = 'control-button ' + (data.us ? 'start' : 'stop');
+            controlButton.disabled = data.st === 0;
+        }
+
+        // Settings (only update if not being edited)
+        if (!isEditingSettings) {
+            document.getElementById('currentSlider').value = parseInt(data.cs.substring(1));
+            document.getElementById('currentValue').innerText = `${parseInt(data.cs.substring(1))} A`;
+            document.getElementById('unauthorizedUsage').checked = data.unauthUse;
+            document.getElementById('errorOnStateD').checked = data.eod;
+            document.getElementById('tempThresholdSlider').value = data.tt;
+            document.getElementById('tempThresholdValue').innerText = `${data.tt.toFixed(1)} °C`;
+            document.getElementById('currentPercentLimitSlider').value = data.cpl;
+            document.getElementById('currentPercentLimitValue').innerText = `${data.cpl}%`;
+        }
+
+        // Footer
+        document.getElementById('macAddress').innerText = data.mac || '...';
+        document.getElementById('firmwareVersion').innerText = data.fw || '...';
+    }
+
     async function sendCommand(commandObject) {
         if (!commandCharacteristic) {
             alert('Not connected to command characteristic.');
@@ -333,11 +392,6 @@
         const button = document.getElementById('controlButton');
         const command = button.textContent.toUpperCase();
         sendCommand({ command });
-    }
-
-    function showTab(tabId) {
-        document.getElementById('main').style.display = tabId === 'main' ? 'block' : 'none';
-        document.getElementById('settings').style.display = tabId === 'settings' ? 'block' : 'none';
     }
 
     function saveSettings() {
