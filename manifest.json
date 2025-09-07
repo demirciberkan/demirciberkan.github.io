@@ -2,8 +2,8 @@
   "devices": [
     {
       "model": "EVSEPARKER_V2_GEN2",
-      "latest_version": "10.1.42",
-      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_1_42.bin", 
+      "latest_version": "10.1.43",
+      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_1_43.bin", 
       "changelog": "Initial release with OTA support. Improved physical button reset logic for all error states."
     }
   ],
