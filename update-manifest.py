@@ -35,18 +35,6 @@ class ManifestUpdater:
         self.firmware_dir = Path("firmware")
         self.manifest_file = Path("manifest.json")
 
-        # Hardware model definitions
-        self.hardware_models = {
-            "EVSEPARKER_V2_GEN1": {
-                "name": "EVSEPARKER V2 GEN1",
-                "description": "Original V2 hardware revision with standard pin configuration"
-            },
-            "EVSEPARKER_V2_GEN2": {
-                "name": "EVSEPARKER V2 GEN2",
-                "description": "Second generation V2 hardware with improved relay control"
-            }
-        }
-
     def parse_firmware_filename(self, filename):
         """
         Parse firmware filename to extract version and metadata
@@ -168,6 +156,19 @@ class ManifestUpdater:
 
         return firmware_versions
 
+    def get_model_directories(self):
+        """Scan firmware directory and return all subdirectories as model names"""
+        if not self.firmware_dir.exists():
+            print(f"Warning: Firmware directory {self.firmware_dir} does not exist")
+            return []
+
+        model_dirs = []
+        for item in self.firmware_dir.iterdir():
+            if item.is_dir():
+                model_dirs.append(item.name)
+
+        return sorted(model_dirs)
+
     def generate_manifest(self):
         """Generate complete manifest.json from firmware directories"""
         manifest = {
@@ -178,7 +179,16 @@ class ManifestUpdater:
 
         print("Scanning firmware directories...")
 
-        for model_name, model_info in self.hardware_models.items():
+        # Get all model directories dynamically
+        model_directories = self.get_model_directories()
+
+        if not model_directories:
+            print("No model directories found in firmware folder")
+            return manifest
+
+        print(f"Found model directories: {', '.join(model_directories)}")
+
+        for model_name in model_directories:
             print(f"\nProcessing {model_name}...")
 
             firmware_versions, mac_specific = self.scan_firmware_directory(model_name)
@@ -188,8 +198,8 @@ class ManifestUpdater:
                 firmware_versions = self.update_descriptions(firmware_versions)
 
                 manifest["hardware_models"][model_name] = {
-                    "name": model_info["name"],
-                    "description": model_info["description"],
+                    "name": model_name.replace('_', ' '),  # Convert folder name to display name
+                    "description": f"Hardware model {model_name}",
                     "firmware_versions": firmware_versions
                 }
                 print(f"Added {len(firmware_versions)} firmware versions for {model_name}")

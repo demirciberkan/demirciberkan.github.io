@@ -1,31 +1,26 @@
-# EVSEPARKER Automation Scripts
+# EVSEPARKER Firmware Manifest Automation
 
-This directory contains automation scripts for managing firmware and language files in the EVSEPARKER project.
+This directory contains automation scripts for managing firmware distribution in the EVSEPARKER project.
 
 ## 🚀 Quick Start
 
 ```bash
-# Update both manifest and language files
+# Update manifest.json based on firmware folders
 ./update-all.sh
 
 # Preview changes without modifying files
 ./update-all.sh --dry-run
-
-# Update only manifest.json
-./update-all.sh --skip-languages
-
-# Generate translation report
-./update-all.sh --report
 ```
 
 ## 📜 Available Scripts
 
 ### 1. `update-manifest.py` - Firmware Manifest Updater
 
-Automatically scans firmware directories and updates `manifest.json` based on file naming conventions.
+Automatically scans firmware directories and updates `manifest.json` based on folder structure and file naming conventions.
 
 **Features:**
-- Scans firmware files and extracts version information
+- Dynamically discovers hardware models from folder names in `/firmware` directory
+- Scans firmware files and extracts version information from filenames
 - Generates URLs for firmware downloads
 - Handles MAC-specific firmware targeting
 - Preserves manually added MAC entries
@@ -33,10 +28,11 @@ Automatically scans firmware directories and updates `manifest.json` based on fi
 
 **File Naming Convention:**
 ```
-# Standard firmware
+# Standard firmware files
 EVSE_10_2_0.bin          → version 10.2.0
+EVSE_10_1_43.bin         → version 10.1.43
 
-# MAC-specific firmware
+# MAC-specific firmware (optional)
 EVSE_10_2_1_custom_ABCDEF123456.bin → custom firmware for MAC AB:CD:EF:12:34:56
 ```
 
@@ -55,65 +51,26 @@ python3 update-manifest.py --base-url https://yourdomain.com
 python3 update-manifest.py --reset-mac
 ```
 
-### 2. `update-languages.py` - Language File Manager
+### 2. `update-all.sh` - Simplified Runner Script
 
-Manages translation files for the React Native app, ensuring all languages stay synchronized.
-
-**Features:**
-- Validates translation file completeness
-- Syncs missing keys between language files
-- Adds placeholder translations for missing keys
-- Generates detailed translation reports
-- Handles nested JSON structure with dot notation
-
-**Usage:**
-```bash
-# Show validation status
-python3 update-languages.py --validate
-
-# Sync all languages with master (English)
-python3 update-languages.py --sync
-
-# Generate detailed translation report
-python3 update-languages.py --report
-
-# Add new translation key
-python3 update-languages.py --add-key "settings.newFeature" --english-text "New Feature" --turkish-text "Yeni Özellik"
-
-# Specify custom translations directory
-python3 update-languages.py --translations-dir /path/to/translations --validate
-```
-
-### 3. `update-all.sh` - Combined Runner Script
-
-Runs both manifest and language updates in a single command with colored output and comprehensive error handling.
+Runs the manifest update with colored output and comprehensive error handling.
 
 **Features:**
-- Runs both updates with single command
+- Runs manifest update with single command
 - Colored output for better readability
 - Dry-run mode for preview
 - Comprehensive error handling
-- Flexible options for selective updates
 
 **Usage:**
 ```bash
-# Full update (recommended)
+# Update manifest (recommended)
 ./update-all.sh
 
 # Preview what would be changed
 ./update-all.sh --dry-run
 
-# Update only manifest
-./update-all.sh --skip-languages
-
-# Update only languages
-./update-all.sh --skip-manifest
-
-# Generate translation report
-./update-all.sh --report
-
-# Custom settings
-./update-all.sh --base-url https://yourdomain.com --translations-dir /custom/path
+# Use custom base URL
+./update-all.sh --base-url https://yourdomain.com
 ```
 
 ## 📁 Directory Structure
@@ -122,41 +79,60 @@ The scripts expect the following directory structure:
 
 ```
 demirciberkan.github.io/
-├── manifest.json                           # Firmware manifest (auto-updated)
+├── manifest.json                           # Firmware manifest (auto-generated)
 ├── firmware/                              # Firmware files directory
 │   ├── EVSEPARKER_V2_GEN1/               # GEN1 hardware firmware
 │   │   ├── EVSE_10_1_43.bin
+│   │   └── EVSE_10_2_0.bin
+│   ├── EVSEPARKER_V2_GEN2/               # GEN2 hardware firmware
 │   │   ├── EVSE_10_2_0.bin
-│   │   └── EVSE_10_2_1_custom_ABCD.bin   # MAC-specific firmware
-│   └── EVSEPARKER_V2_GEN2/               # GEN2 hardware firmware
-│       ├── EVSE_10_1_43.bin
-│       └── EVSE_10_2_0.bin
+│   │   ├── EVSE_10_3_0.bin
+│   │   └── EVSE_10_2_1_custom_ABCD.bin   # MAC-specific firmware (optional)
+│   └── [OTHER_MODEL]/                    # Any other hardware models
+│       └── EVSE_x_x_x.bin
 ├── update-manifest.py                     # Manifest updater script
-├── update-languages.py                    # Language updater script
-├── update-all.sh                         # Combined runner script
-└── ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/  # Language files
-    ├── en.json                           # English (master language)
-    └── tr.json                           # Turkish
+└── update-all.sh                         # Simplified runner script
 ```
 
 ## 🔄 Workflow Examples
 
-### Adding New Firmware
+### Adding New Hardware Model
 
-1. **Upload firmware file** to appropriate model directory:
+1. **Create new folder** in firmware directory:
    ```bash
-   cp EVSE_10_2_1.bin firmware/EVSEPARKER_V2_GEN2/
+   mkdir firmware/EVSEPARKER_V3_GEN1
    ```
 
-2. **Update manifest automatically**:
+2. **Add firmware files**:
    ```bash
-   ./update-all.sh --skip-languages
+   cp EVSE_10_4_0.bin firmware/EVSEPARKER_V3_GEN1/
+   ```
+
+3. **Update manifest**:
+   ```bash
+   ./update-all.sh
+   ```
+
+The script will automatically:
+- Detect the new `EVSEPARKER_V3_GEN1` folder
+- Create a new hardware model entry
+- Add the firmware version to the manifest
+
+### Adding New Firmware Version
+
+1. **Upload firmware file** to appropriate model folder:
+   ```bash
+   cp EVSE_10_5_0.bin firmware/EVSEPARKER_V2_GEN2/
+   ```
+
+2. **Update manifest**:
+   ```bash
+   ./update-all.sh
    ```
 
 3. **Verify the update**:
    ```bash
-   # Check that manifest.json was updated with new version
-   cat manifest.json | grep -A 5 "10.2.1"
+   cat manifest.json | grep -A 5 "10.5.0"
    ```
 
 ### Adding MAC-Specific Firmware
@@ -174,55 +150,21 @@ demirciberkan.github.io/
 
 3. **Verify MAC targeting**:
    ```bash
-   # Check that manifest.json has MAC-specific entry
    cat manifest.json | grep -A 10 "mac_specific"
    ```
-
-### Adding New Translation
-
-1. **Add English text** first:
-   ```bash
-   python3 update-languages.py --add-key "errors.E_NEW_ERROR" --english-text "New Error Type"
-   ```
-
-2. **Add Turkish translation**:
-   ```bash
-   python3 update-languages.py --add-key "errors.E_NEW_ERROR" --english-text "New Error Type" --turkish-text "Yeni Hata Tipi"
-   ```
-
-3. **Validate all languages**:
-   ```bash
-   python3 update-languages.py --validate
-   ```
-
-### Weekly Maintenance
-
-Run the complete update to ensure everything is synchronized:
-
-```bash
-# Preview changes
-./update-all.sh --dry-run
-
-# Apply updates if everything looks good
-./update-all.sh
-
-# Generate translation report for review
-./update-all.sh --report
-```
 
 ## ⚠️ Important Notes
 
 ### Firmware Management
 - **File Size**: Empty firmware files (0 bytes) are automatically skipped
-- **Naming**: Stick to the naming convention for automatic version detection
+- **Naming**: Stick to the naming convention `EVSE_x_x_x.bin` for automatic version detection
 - **MAC Format**: MAC addresses must be exactly 12 hex characters for auto-detection
 - **Backup**: Always backup your manifest.json before major changes
 
-### Language Management
-- **Master Language**: English (en.json) is the master - add new keys here first
-- **Placeholders**: Missing translations get placeholder text like `[TR] English Text`
-- **Structure**: Maintain the nested JSON structure when adding keys
-- **Encoding**: All files are saved with UTF-8 encoding
+### Folder Structure
+- **Model Names**: Folder names become hardware model IDs in the manifest
+- **Display Names**: Folder names are converted to display names (underscores become spaces)
+- **Dynamic Discovery**: No need to hardcode model names - script discovers them automatically
 
 ### Security
 - **File Validation**: Scripts validate file formats before processing
@@ -233,11 +175,10 @@ Run the complete update to ensure everything is synchronized:
 
 ### Common Issues
 
-**"Directory not found" error:**
+**"No model directories found" error:**
 ```bash
-# Check if directories exist
+# Check if firmware directory exists and has subdirectories
 ls -la firmware/
-ls -la ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/
 ```
 
 **"Could not parse filename" warning:**
@@ -249,18 +190,8 @@ ls -la ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/
 
 **"JSON parse error":**
 ```bash
-# Validate JSON files
+# Validate JSON file
 python3 -m json.tool manifest.json
-python3 -m json.tool ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/en.json
-```
-
-**Language sync issues:**
-```bash
-# Check file permissions
-ls -la ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/
-
-# Run validation to see specific issues
-python3 update-languages.py --validate
 ```
 
 ### Recovery
@@ -274,15 +205,6 @@ git checkout HEAD~1 -- manifest.json
 cp manifest.json.backup manifest.json
 ```
 
-**Reset language files:**
-```bash
-# Restore from Git (if available)
-git checkout HEAD -- ../App/EVSEPARKER_rn/EVSEPARKER_OTA/translations/
-
-# Or sync again
-python3 update-languages.py --sync
-```
-
 ## 📊 Script Output Examples
 
 ### Successful Manifest Update
@@ -290,42 +212,60 @@ python3 update-languages.py --sync
 EVSEPARKER Firmware Manifest Updater
 ==================================================
 Scanning firmware directories...
+Found model directories: EVSEPARKER_V2_GEN1, EVSEPARKER_V2_GEN2
 
 Processing EVSEPARKER_V2_GEN1...
-Added firmware version 10.2.0 for EVSEPARKER_V2_GEN1
 Added firmware version 10.1.43 for EVSEPARKER_V2_GEN1
-Added 2 firmware versions for EVSEPARKER_V2_GEN1
+Added 1 firmware versions for EVSEPARKER_V2_GEN1
 
 Processing EVSEPARKER_V2_GEN2...
-Added MAC-specific firmware for AB:CD:EF:12:34:56: v10.2.1
+Added firmware version 10.3.0 for EVSEPARKER_V2_GEN2
 Added firmware version 10.2.0 for EVSEPARKER_V2_GEN2
-Added 1 firmware versions for EVSEPARKER_V2_GEN2
+Added 2 firmware versions for EVSEPARKER_V2_GEN2
 
-Found 1 MAC-specific firmware entries
+Found 0 MAC-specific firmware entries
 
 ==================================================
 Update completed successfully!
 Hardware models: 2
-MAC-specific entries: 1
+MAC-specific entries: 0
 ```
 
-### Language Validation Output
+### Generated Manifest Structure
+```json
+{
+  "hardware_models": {
+    "EVSEPARKER_V2_GEN1": {
+      "name": "EVSEPARKER V2 GEN1",
+      "description": "Hardware model EVSEPARKER_V2_GEN1",
+      "firmware_versions": [
+        {
+          "version": "10.1.43",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10_1_43.bin",
+          "description": "Stable release with improved safety features.",
+          "release_date": "2025-09-26",
+          "file_size": "1.15 MB"
+        }
+      ]
+    }
+  },
+  "mac_specific": {},
+  "last_updated": "2025-09-26T00:49:57.484431"
+}
 ```
-Validating language files...
-========================================
-en.json:
-  Completeness: 100.0%
-  Total keys: 189
-  Missing: 0
-  Extra: 0
-  Placeholders: 0
 
-tr.json:
-  Completeness: 95.2%
-  Total keys: 180
-  Missing: 9
-  Extra: 0
-  Placeholders: 5
-```
+## 🚀 Deployment
 
-This automation system will save you significant time when managing firmware releases and translations! 🚀
+### GitHub Pages Setup
+1. Repository must be named `username.github.io`
+2. Ensure all paths are relative or absolute GitHub Pages URLs
+3. Test all functionality after deployment
+4. Monitor for CORS issues with external resources
+
+### Workflow
+1. Drop firmware files in appropriate model folders: `firmware/MODEL_NAME/EVSE_x_x_x.bin`
+2. Run `./update-all.sh`
+3. The script automatically updates `manifest.json`
+4. For MAC-specific firmware, use naming: `EVSE_version_custom_MACADDRESS.bin`
+
+The automation system provides a simple, maintainable way to manage firmware releases without manual manifest editing! 🎉

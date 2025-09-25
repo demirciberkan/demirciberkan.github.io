@@ -28,6 +28,13 @@
       "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_custom_ABCDEF123456.bin",
       "description": "Custom firmware for specific relay timing issue",
       "expires": "2024-12-25"
+    },
+    "AB:CD:EF:12:34:56": {
+      "model": "EVSEPARKER_V2_GEN2",
+      "version": "10.2.1-custom",
+      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_custom_ABCDEF123456.bin",
+      "description": "Custom firmware for specific relay timing issue",
+      "expires": "2024-12-25"
     }
   },
   "last_updated": "2025-09-26T00:33:19.752732"
