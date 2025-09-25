@@ -1,40 +1,54 @@
 {
-  "devices": [
-    {
-      "model": "EVSEPARKER_V2_GEN1",
-      "latest_version": "10.2.0",
-      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10_2_0.bin",
-      "changelog": "Enhanced OTA protocol compatibility. Fixed BLE stack overflow issues. Improved current sensor calibration and relay control logic.",
-      "release_date": "2024-09-25T00:00:00Z",
-      "file_size": "1.15 MB",
-      "hardware_version": "V2 GEN1",
-      "features": ["Multi-phase monitoring", "GFCI protection", "Temperature sensing", "Web Bluetooth control"],
-      "compatibility": ["ESP32", "Arduino Framework"],
-      "security": {
-        "signed": true,
-        "checksum": "sha256:a1b2c3d4e5f6..."
-      }
+  "hardware_models": {
+    "EVSEPARKER_V2_GEN1": {
+      "name": "EVSEPARKER V2 GEN1",
+      "description": "Original V2 hardware revision",
+      "firmware_versions": [
+        {
+          "version": "10.2.0",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10_2_0.bin",
+          "description": "Enhanced OTA protocol. Fixed BLE stack overflow. Improved sensor calibration.",
+          "release_date": "2024-09-25",
+          "file_size": "1.15 MB"
+        },
+        {
+          "version": "10.1.43",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10_1_43.bin",
+          "description": "Stable release with OTA support. Improved physical button reset logic.",
+          "release_date": "2024-09-01",
+          "file_size": "1.12 MB"
+        }
+      ]
     },
-    {
-      "model": "EVSEPARKER_V2_GEN2",
-      "latest_version": "10.2.0",
-      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_0.bin",
-      "changelog": "Second generation hardware support. Updated pin assignments for improved layout. Enhanced OTA stability and error recovery.",
-      "release_date": "2024-09-25T00:00:00Z",
-      "file_size": "1.15 MB",
-      "hardware_version": "V2 GEN2",
-      "features": ["Multi-phase monitoring", "GFCI protection", "Temperature sensing", "Web Bluetooth control", "Improved relay control"],
-      "compatibility": ["ESP32", "Arduino Framework"],
-      "security": {
-        "signed": true,
-        "checksum": "sha256:b2c3d4e5f6a1..."
-      }
+    "EVSEPARKER_V2_GEN2": {
+      "name": "EVSEPARKER V2 GEN2",
+      "description": "Second generation hardware with updated pin assignments",
+      "firmware_versions": [
+        {
+          "version": "10.2.0",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_0.bin",
+          "description": "GEN2 hardware support. Updated pin assignments. Enhanced OTA stability.",
+          "release_date": "2024-09-25",
+          "file_size": "1.15 MB"
+        },
+        {
+          "version": "10.1.43",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_1_43.bin",
+          "description": "Initial GEN2 support with standard features.",
+          "release_date": "2024-09-01",
+          "file_size": "1.12 MB"
+        }
+      ]
     }
-  ],
-  "last_updated": "2024-09-25T12:00:00Z",
-  "metadata": {
-    "repository": "https://github.com/demirciberkan/evseparker",
-    "documentation": "https://demirciberkan.github.io/docs",
-    "support": "https://github.com/demirciberkan/evseparker/issues"
-  }
+  },
+  "mac_specific": {
+    "AB:CD:EF:12:34:56": {
+      "model": "EVSEPARKER_V2_GEN2",
+      "version": "10.2.1-custom",
+      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_custom_ABCDEF123456.bin",
+      "description": "Custom firmware for specific relay timing issue",
+      "expires": "2024-12-25"
+    }
+  },
+  "last_updated": "2024-09-25T12:00:00Z"
 }

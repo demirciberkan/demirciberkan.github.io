@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVSEPARKER - Firmware Distribution Hub</title>
+    <title>EVSEPARKER - Firmware Downloads</title>
     <style>
         :root {
             --primary-color: #2ecc71;
@@ -19,7 +19,6 @@
             --border-color: #bdc3c7;
             --shadow: 0 4px 20px rgba(0,0,0,0.1);
             --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
-            --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
         }
 
         * {
@@ -35,105 +34,178 @@
             line-height: 1.6;
         }
 
-        /* Header */
         .header {
-            background: var(--gradient);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: var(--text-light);
-            padding: 2rem 0;
+            padding: 3rem 0;
             text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20L100 0H0V20Z" fill="%23ffffff" fill-opacity="0.05"/></svg>');
-            background-size: 100px 20px;
-            animation: wave 20s linear infinite;
-        }
-
-        @keyframes wave {
-            0% { background-position-x: 0; }
-            100% { background-position-x: 100px; }
         }
 
         .header h1 {
             font-size: 3rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
         }
 
-        .header .subtitle {
+        .header p {
             font-size: 1.2rem;
             opacity: 0.9;
-            position: relative;
-            z-index: 1;
         }
 
-        /* Container */
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 2rem 1rem;
         }
 
-        /* Device Detection Section */
-        .device-detection {
+        .nav-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            background: var(--card-bg);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            background: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        .selection-section {
             background: var(--card-bg);
             border-radius: 15px;
             padding: 2rem;
-            margin-bottom: 2rem;
             box-shadow: var(--shadow);
+            margin-bottom: 2rem;
             text-align: center;
         }
 
-        .device-detection h2 {
+        .selection-section h2 {
             color: var(--text-dark);
             margin-bottom: 1rem;
-            font-size: 1.5rem;
         }
 
-        .device-info {
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .hardware-card {
             background: var(--light-bg);
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin: 1rem 0;
+            border: 3px solid transparent;
+            border-radius: 12px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .hardware-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .hardware-card.selected {
+            border-color: var(--primary-color);
+            background: var(--card-bg);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .hardware-card h3 {
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .hardware-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .firmware-section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
             display: none;
         }
 
-        .device-info.active {
+        .firmware-section.active {
             display: block;
         }
 
-        .device-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+        .firmware-section h2 {
+            color: var(--text-dark);
             margin-bottom: 1.5rem;
+            text-align: center;
         }
 
-        .device-detail {
-            text-align: left;
+        .firmware-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .device-detail strong {
-            color: var(--primary-color);
+        .firmware-item {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        /* Detection Buttons */
-        .detection-buttons {
+        .firmware-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .firmware-version {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .firmware-description {
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .firmware-meta {
             display: flex;
             gap: 1rem;
-            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+        }
+
+        .firmware-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -171,283 +243,29 @@
             opacity: 0.9;
         }
 
-        /* MAC Input Section */
-        .mac-input-section {
-            background: var(--warning-color);
-            color: var(--text-dark);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .mac-input-section.active {
-            display: block;
-        }
-
-        .mac-input-container {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            margin-top: 0.5rem;
-        }
-
-        .mac-input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 2px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 1rem;
-            font-family: monospace;
-        }
-
-        .mac-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        /* Navigation */
-        .nav-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin: 2rem 0;
-            flex-wrap: wrap;
-        }
-
-        .nav-link {
-            background: var(--card-bg);
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .nav-link:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-            background: var(--primary-color);
-            color: var(--text-light);
-        }
-
-        /* Stats Section */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* Device Cards */
-        .devices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-        }
-
-        .device-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            display: none;
-        }
-
-        .device-card.visible {
-            display: block;
-        }
-
-        .device-card.targeted {
-            border: 3px solid var(--warning-color);
-            box-shadow: 0 0 20px rgba(243, 156, 18, 0.3);
-        }
-
-        .device-card.targeted::before {
-            content: '🎯 TARGETED UPDATE';
-            position: absolute;
-            top: -10px;
-            right: -30px;
-            background: var(--warning-color);
-            color: var(--text-dark);
-            padding: 5px 40px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            transform: rotate(45deg);
-        }
-
-        .device-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: var(--gradient);
-        }
-
-        .device-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .device-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-
-        .device-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .device-status {
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-stable {
-            background: var(--primary-color);
-            color: var(--text-light);
-        }
-
-        .status-beta {
-            background: var(--warning-color);
-            color: var(--text-light);
-        }
-
-        .device-info-section {
-            margin-bottom: 2rem;
-        }
-
-        .device-version {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--secondary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .device-changelog {
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 1rem;
-        }
-
-        .device-meta {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        /* Action Buttons */
-        .actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        /* Footer */
         .footer {
             background: var(--dark-bg);
             color: var(--text-light);
-            padding: 3rem 0;
+            padding: 2rem 0;
             text-align: center;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .footer h3 {
-            margin-bottom: 1rem;
+            margin-top: 3rem;
         }
 
         .footer p {
             opacity: 0.8;
-            margin-bottom: 1rem;
         }
 
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-link {
-            color: var(--text-light);
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-        }
-
-        .footer-link:hover {
-            opacity: 1;
-        }
-
-        /* Loading State */
         .loading {
             text-align: center;
-            padding: 4rem 0;
+            padding: 2rem;
+            color: var(--text-muted);
         }
 
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
@@ -458,31 +276,33 @@
             100% { transform: rotate(360deg); }
         }
 
+        .back-button {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
             }
 
-            .nav-links, .detection-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .devices-grid {
+            .hardware-grid {
                 grid-template-columns: 1fr;
             }
 
-            .actions {
+            .firmware-item {
                 flex-direction: column;
+                text-align: center;
             }
 
-            .btn {
+            .firmware-actions {
                 justify-content: center;
             }
 
-            .device-details {
-                grid-template-columns: 1fr;
+            .nav-links {
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
@@ -491,463 +311,174 @@
     <header class="header">
         <div class="container">
             <h1>EVSEPARKER</h1>
-            <p class="subtitle">Professional Electric Vehicle Supply Equipment - Firmware Distribution Hub</p>
+            <p>Professional Electric Vehicle Supply Equipment - Firmware Downloads</p>
         </div>
     </header>
 
     <div class="container">
-        <!-- Device Detection Section -->
-        <section class="device-detection">
-            <h2>🔍 Device Detection & Firmware Selection</h2>
-            <p>Connect your EVSEPARKER device to automatically detect compatible firmware, or manually select your hardware version.</p>
-
-            <div class="detection-buttons">
-                <button class="btn btn-primary" onclick="detectDevice()">
-                    <span>🔗</span> Auto-Detect Device
-                </button>
-                <button class="btn btn-secondary" onclick="showManualSelection()">
-                    <span>⚙️</span> Manual Selection
-                </button>
-                <button class="btn btn-outline" onclick="toggleMacInput()">
-                    <span>🎯</span> MAC-Based Update
-                </button>
+        <!-- Navigation Links -->
+        <div class="nav-section">
+            <div class="nav-links">
+                <a href="control.html" class="nav-link">🔗 Web Control</a>
+                <a href="testing/" class="nav-link">🧪 Beta Testing</a>
             </div>
+        </div>
 
-            <!-- MAC Input Section -->
-            <div class="mac-input-section" id="macInputSection">
-                <strong>🎯 MAC-Based Targeted Update</strong>
-                <p>Enter a specific MAC address to show targeted firmware updates for that device:</p>
-                <div class="mac-input-container">
-                    <input type="text"
-                           class="mac-input"
-                           id="macAddressInput"
-                           placeholder="XX:XX:XX:XX:XX:XX"
-                           pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
-                           maxlength="17">
-                    <button class="btn btn-primary" onclick="checkTargetedFirmware()">Check</button>
-                    <button class="btn btn-outline" onclick="clearMacInput()">Clear</button>
+        <!-- Hardware Selection -->
+        <div class="selection-section" id="selectionSection">
+            <h2>Select Your Hardware Version</h2>
+            <p>Choose your EVSEPARKER hardware model to see available firmware downloads.</p>
+
+            <div class="hardware-grid" id="hardwareGrid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading hardware models...</p>
                 </div>
             </div>
+        </div>
 
-            <!-- Device Info Display -->
-            <div class="device-info" id="deviceInfo">
-                <div class="device-details">
-                    <div class="device-detail">
-                        <strong>Device Name:</strong> <span id="detectedName">Unknown</span>
-                    </div>
-                    <div class="device-detail">
-                        <strong>MAC Address:</strong> <span id="detectedMac">Unknown</span>
-                    </div>
-                    <div class="device-detail">
-                        <strong>Hardware:</strong> <span id="detectedHardware">Unknown</span>
-                    </div>
-                    <div class="device-detail">
-                        <strong>Current FW:</strong> <span id="detectedFirmware">Unknown</span>
-                    </div>
+        <!-- Firmware List -->
+        <div class="firmware-section" id="firmwareSection">
+            <div class="back-button">
+                <button class="btn btn-outline" onclick="goBack()">← Back to Hardware Selection</button>
+            </div>
+
+            <h2 id="firmwareTitle">Available Firmware</h2>
+
+            <div class="firmware-list" id="firmwareList">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading firmware versions...</p>
                 </div>
             </div>
-        </section>
-
-        <nav class="nav-links">
-            <a href="control.html" class="nav-link">
-                <span>🔗</span> Web Bluetooth Control
-            </a>
-            <a href="#devices" class="nav-link">
-                <span>📦</span> Available Firmware
-            </a>
-            <a href="testing/" class="nav-link">
-                <span>🧪</span> Beta Testing
-            </a>
-        </nav>
-
-        <section class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="deviceCount">0</div>
-                <div class="stat-label">Device Models</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="firmwareCount">0</div>
-                <div class="stat-label">Firmware Versions</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="lastUpdate">-</div>
-                <div class="stat-label">Last Updated</div>
-            </div>
-        </section>
-
-        <section id="devices">
-            <div class="loading" id="loadingState">
-                <div class="loading-spinner"></div>
-                <p>Loading firmware information...</p>
-            </div>
-            <div class="devices-grid" id="devicesGrid" style="display: none;"></div>
-        </section>
+        </div>
     </div>
 
     <footer class="footer">
-        <div class="footer-content">
-            <h3>EVSEPARKER Firmware Distribution</h3>
-            <p>Professional-grade electric vehicle charging solutions with advanced OTA update capabilities.</p>
-            <div class="footer-links">
-                <a href="#" class="footer-link">GitHub Repository</a>
-                <a href="#" class="footer-link">Technical Documentation</a>
-                <a href="#" class="footer-link">Support Portal</a>
-                <a href="#" class="footer-link">License Information</a>
-            </div>
+        <div class="container">
+            <p>EVSEPARKER Firmware Distribution Hub - Professional EV Charging Solutions</p>
         </div>
     </footer>
 
     <script>
         let manifestData = null;
-        let detectedHardware = null;
-        let targetedMac = null;
-        let device = null;
-        let stateCharacteristic = null;
-
-        // Web Bluetooth setup
-        const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-        const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        let selectedHardware = null;
 
         async function loadManifest() {
             try {
                 const response = await fetch('manifest.json');
                 manifestData = await response.json();
-                updateStats();
-                renderDevices();
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('devicesGrid').style.display = 'grid';
+                renderHardwareSelection();
             } catch (error) {
                 console.error('Failed to load manifest:', error);
-                document.getElementById('loadingState').innerHTML = `
-                    <p style="color: var(--accent-color);">⚠️ Failed to load firmware information. Please try again later.</p>
+                document.getElementById('hardwareGrid').innerHTML = `
+                    <div style="color: var(--accent-color); text-align: center;">
+                        ⚠️ Failed to load hardware information. Please try again later.
+                    </div>
                 `;
             }
         }
 
-        function updateStats() {
-            if (!manifestData) return;
-
-            const deviceCount = manifestData.devices ? manifestData.devices.length : 0;
-            const firmwareCount = deviceCount;
-            const lastUpdate = manifestData.last_updated ?
-                new Date(manifestData.last_updated).toLocaleDateString() : '-';
-
-            document.getElementById('deviceCount').textContent = deviceCount;
-            document.getElementById('firmwareCount').textContent = firmwareCount;
-            document.getElementById('lastUpdate').textContent = lastUpdate;
-        }
-
-        async function detectDevice() {
-            if (!navigator.bluetooth) {
-                alert('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.');
-                return;
-            }
-
-            try {
-                console.log('Requesting Bluetooth device...');
-                device = await navigator.bluetooth.requestDevice({
-                    filters: [{ namePrefix: 'EVSEPARKER_' }],
-                    optionalServices: [serviceUUID]
-                });
-
-                console.log('Connecting to GATT server...');
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService(serviceUUID);
-                stateCharacteristic = await service.getCharacteristic(stateUUID);
-
-                await stateCharacteristic.startNotifications();
-                stateCharacteristic.addEventListener('characteristicvaluechanged', handleDeviceData);
-
-                // Get device MAC address
-                const macAddress = device.id || 'Unknown';
-
-                // Update UI with detected device info
-                document.getElementById('detectedName').textContent = device.name || 'Unknown';
-                document.getElementById('detectedMac').textContent = macAddress;
-                document.getElementById('detectedHardware').textContent = determineHardwareFromName(device.name);
-                document.getElementById('detectedFirmware').textContent = 'Detecting...';
-
-                document.getElementById('deviceInfo').classList.add('active');
-
-                // Filter firmware based on detected hardware
-                detectedHardware = determineHardwareFromName(device.name);
-                renderDevices();
-
-                console.log('Device detected and connected!');
-
-            } catch (error) {
-                console.error('Device detection failed:', error);
-                alert(`Device detection failed: ${error.message}`);
-            }
-        }
-
-        function handleDeviceData(event) {
-            const value = new TextDecoder().decode(event.target.value);
-            // Parse device data and update firmware version if available
-            try {
-                const data = JSON.parse(value);
-                if (data.fw) {
-                    document.getElementById('detectedFirmware').textContent = data.fw;
-                }
-            } catch (e) {
-                // Ignore parse errors for now
-            }
-        }
-
-        function determineHardwareFromName(deviceName) {
-            if (!deviceName) return 'Unknown';
-
-            if (deviceName.includes('_GEN2')) return 'EVSEPARKER_V2_GEN2';
-            if (deviceName.includes('_GEN1')) return 'EVSEPARKER_V2_GEN1';
-            if (deviceName.startsWith('EVSEPARKER_')) return 'EVSEPARKER_V2_GEN1'; // Default to GEN1
-
-            return 'Unknown';
-        }
-
-        function showManualSelection() {
-            const hardware = prompt('Select your hardware version:\n1. EVSEPARKER_V2_GEN1\n2. EVSEPARKER_V2_GEN2\n\nEnter 1 or 2:');
-
-            if (hardware === '1') {
-                detectedHardware = 'EVSEPARKER_V2_GEN1';
-                updateManualDetection('EVSEPARKER_V2_GEN1', 'Manual Selection');
-            } else if (hardware === '2') {
-                detectedHardware = 'EVSEPARKER_V2_GEN2';
-                updateManualDetection('EVSEPARKER_V2_GEN2', 'Manual Selection');
-            } else if (hardware !== null) {
-                alert('Invalid selection. Please choose 1 or 2.');
-                return;
-            }
-
-            renderDevices();
-        }
-
-        function updateManualDetection(hardware, source) {
-            document.getElementById('detectedName').textContent = source;
-            document.getElementById('detectedMac').textContent = 'Not connected';
-            document.getElementById('detectedHardware').textContent = hardware;
-            document.getElementById('detectedFirmware').textContent = 'Not detected';
-            document.getElementById('deviceInfo').classList.add('active');
-        }
-
-        function toggleMacInput() {
-            const section = document.getElementById('macInputSection');
-            section.classList.toggle('active');
-            if (section.classList.contains('active')) {
-                document.getElementById('macAddressInput').focus();
-            }
-        }
-
-        function clearMacInput() {
-            document.getElementById('macAddressInput').value = '';
-            targetedMac = null;
-            renderDevices();
-        }
-
-        async function checkTargetedFirmware() {
-            const macInput = document.getElementById('macAddressInput').value.trim().toUpperCase();
-
-            if (!macInput) {
-                alert('Please enter a MAC address');
-                return;
-            }
-
-            // Validate MAC address format
-            const macRegex = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
-            if (!macRegex.test(macInput)) {
-                alert('Please enter a valid MAC address format (XX:XX:XX:XX:XX:XX)');
-                return;
-            }
-
-            targetedMac = macInput;
-
-            // Check if there are targeted updates for this MAC
-            const hasTargetedUpdates = await checkForTargetedUpdates(targetedMac);
-
-            if (hasTargetedUpdates) {
-                alert(`✅ Targeted firmware updates found for MAC: ${targetedMac}`);
-            } else {
-                alert(`ℹ️ No specific targeted updates for MAC: ${targetedMac}\nStandard firmware will be shown.`);
-            }
-
-            renderDevices();
-        }
-
-        async function checkForTargetedUpdates(macAddress) {
-            try {
-                // Try to fetch a targeted manifest for this MAC
-                const response = await fetch(`targeted/${macAddress.replace(/:/g, '_')}.json`);
-                if (response.ok) {
-                    const targetedData = await response.json();
-                    // Replace manifestData with targeted data for this session
-                    manifestData = {
-                        devices: targetedData.devices,
-                        last_updated: targetedData.customer_info.created_date,
-                        targeted: true,
-                        customer_info: targetedData.customer_info
-                    };
-                    return true;
-                }
-            } catch (e) {
-                // Ignore errors - no targeted update available
-                console.log('No targeted update found for MAC:', macAddress);
-            }
-            return false;
-        }
-
-        function renderDevices() {
-            if (!manifestData || !manifestData.devices) return;
-
-            const grid = document.getElementById('devicesGrid');
+        function renderHardwareSelection() {
+            const grid = document.getElementById('hardwareGrid');
             grid.innerHTML = '';
 
-            manifestData.devices.forEach(device => {
-                const shouldShow = shouldShowDevice(device);
-                if (shouldShow) {
-                    const deviceCard = createDeviceCard(device, shouldShow.isTargeted);
-                    grid.appendChild(deviceCard);
-                }
+            for (const [modelId, modelData] of Object.entries(manifestData.hardware_models)) {
+                const card = document.createElement('div');
+                card.className = 'hardware-card';
+                card.onclick = () => selectHardware(modelId);
+
+                card.innerHTML = `
+                    <h3>${modelData.name}</h3>
+                    <p>${modelData.description}</p>
+                    <p><strong>${modelData.firmware_versions.length}</strong> firmware version${modelData.firmware_versions.length > 1 ? 's' : ''} available</p>
+                `;
+
+                grid.appendChild(card);
+            }
+        }
+
+        function selectHardware(modelId) {
+            selectedHardware = modelId;
+
+            // Update selection visual
+            document.querySelectorAll('.hardware-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.closest('.hardware-card').classList.add('selected');
+
+            // Show firmware section
+            setTimeout(() => {
+                document.getElementById('selectionSection').style.display = 'none';
+                document.getElementById('firmwareSection').classList.add('active');
+                renderFirmwareList();
+                document.getElementById('firmwareSection').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+
+        function renderFirmwareList() {
+            const modelData = manifestData.hardware_models[selectedHardware];
+            document.getElementById('firmwareTitle').textContent = `${modelData.name} - Available Firmware`;
+
+            const list = document.getElementById('firmwareList');
+            list.innerHTML = '';
+
+            // Sort firmware versions by date (newest first)
+            const sortedVersions = [...modelData.firmware_versions].sort((a, b) =>
+                new Date(b.release_date) - new Date(a.release_date)
+            );
+
+            sortedVersions.forEach((firmware, index) => {
+                const item = document.createElement('div');
+                item.className = 'firmware-item';
+
+                const isLatest = index === 0;
+                const fileName = firmware.url.split('/').pop();
+
+                item.innerHTML = `
+                    <div class="firmware-info">
+                        <div class="firmware-version">
+                            v${firmware.version}
+                            ${isLatest ? '<span style="background: var(--primary-color); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; margin-left: 0.5rem;">LATEST</span>' : ''}
+                        </div>
+                        <div class="firmware-description">${firmware.description}</div>
+                        <div class="firmware-meta">
+                            <span>📅 ${formatDate(firmware.release_date)}</span>
+                            <span>📊 ${firmware.file_size}</span>
+                        </div>
+                    </div>
+                    <div class="firmware-actions">
+                        <a href="${firmware.url}" class="btn btn-primary" download="${fileName}">
+                            ⬇️ Download
+                        </a>
+                        <button class="btn btn-secondary" onclick="copyUrl('${firmware.url}')">
+                            📋 Copy URL
+                        </button>
+                    </div>
+                `;
+
+                list.appendChild(item);
             });
         }
 
-        function shouldShowDevice(device) {
-            // If we have a targeted MAC, check for targeted updates first
-            if (targetedMac) {
-                return { show: true, isTargeted: true };
-            }
+        function goBack() {
+            document.getElementById('firmwareSection').classList.remove('active');
+            document.getElementById('selectionSection').style.display = 'block';
 
-            // If we have detected hardware, only show matching devices
-            if (detectedHardware) {
-                if (device.model === detectedHardware) {
-                    return { show: true, isTargeted: false };
-                }
-                return { show: false };
-            }
+            // Clear selection
+            document.querySelectorAll('.hardware-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            selectedHardware = null;
 
-            // Show all devices if no filtering is active
-            return { show: true, isTargeted: false };
+            document.getElementById('selectionSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function createDeviceCard(device, isTargeted = false) {
-            const card = document.createElement('div');
-            card.className = `device-card visible ${isTargeted ? 'targeted' : ''}`;
-
-            const isStable = device.latest_version && !device.latest_version.includes('beta') && !device.latest_version.includes('alpha') && !device.targeted_fix;
-            const statusClass = device.targeted_fix ? 'status-beta' : (isStable ? 'status-stable' : 'status-beta');
-            const statusText = device.targeted_fix ? 'Targeted Fix' : (isStable ? 'Stable' : 'Beta');
-
-            const firmwareUrl = device.url || '#';
-            const fileName = firmwareUrl.split('/').pop();
-
-            // Generate targeted fix information
-            let targetedFixInfo = '';
-            if (device.targeted_fix && device.fix_description) {
-                targetedFixInfo = `
-                    <div style="background: var(--warning-color); color: var(--text-dark); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                        <h4 style="margin-bottom: 0.5rem;">🎯 Targeted Fixes:</h4>
-                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.9rem;">
-                            ${device.fix_description.map(fix => `<li>${fix}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            }
-
-            // Generate rollback information
-            let rollbackInfo = '';
-            if (device.rollback_info) {
-                rollbackInfo = `
-                    <div style="background: var(--light-bg); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                        <small><strong>🔄 Rollback:</strong> If issues occur, you can rollback to stable v${device.rollback_info.stable_version}</small>
-                    </div>
-                `;
-            }
-
-            // Customer info (if available from targeted manifest)
-            let customerInfo = '';
-            if (manifestData.customer_info && isTargeted) {
-                customerInfo = `
-                    <div style="background: var(--secondary-color); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                        <h4 style="margin-bottom: 0.5rem;">👤 Customer Information</h4>
-                        <div style="font-size: 0.9rem;">
-                            <div><strong>Support Ticket:</strong> ${manifestData.customer_info.issue_ticket || 'N/A'}</div>
-                            <div><strong>Device Serial:</strong> ${manifestData.customer_info.device_serial || 'N/A'}</div>
-                            ${manifestData.customer_info.notes ? `<div style="margin-top: 0.5rem;"><strong>Issue:</strong> ${manifestData.customer_info.notes}</div>` : ''}
-                        </div>
-                    </div>
-                `;
-            }
-
-            card.innerHTML = `
-                <div class="device-header">
-                    <h3 class="device-name">${device.model || 'Unknown Model'}</h3>
-                    <span class="device-status ${statusClass}">${statusText}</span>
-                </div>
-
-                ${customerInfo}
-
-                <div class="device-info-section">
-                    <div class="device-version">v${device.latest_version || 'Unknown'}</div>
-                    <p class="device-changelog">${device.changelog || 'No changelog available.'}</p>
-
-                    ${targetedFixInfo}
-
-                    <div class="device-meta">
-                        <div class="meta-item">
-                            <span>📅</span>
-                            <span>${formatDate(device.release_date) || 'Unknown date'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span>📊</span>
-                            <span>${device.file_size || 'Unknown size'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span>🔧</span>
-                            <span>${device.hardware_version || device.model}</span>
-                        </div>
-                        ${isTargeted ? `<div class="meta-item" style="color: var(--warning-color); font-weight: bold;"><span>🎯</span><span>MAC: ${targetedMac}</span></div>` : ''}
-                        ${device.security?.checksum ? `<div class="meta-item"><span>🔒</span><span>Signed & Verified</span></div>` : ''}
-                    </div>
-
-                    ${rollbackInfo}
-                </div>
-
-                <div class="actions">
-                    <a href="${firmwareUrl}" class="btn btn-primary" download="${fileName}">
-                        <span>⬇️</span> Download ${device.targeted_fix ? 'Custom' : 'Firmware'}
-                    </a>
-                    <button class="btn btn-secondary" onclick="copyOtaUrl('${firmwareUrl}')">
-                        <span>📋</span> Copy OTA URL
-                    </button>
-                    <a href="control.html" class="btn btn-outline">
-                        <span>🔗</span> Web Control
-                    </a>
-                    ${device.rollback_info ? `
-                        <a href="${device.rollback_info.stable_url}" class="btn btn-outline" download>
-                            <span>🔄</span> Download Rollback
-                        </a>
-                    ` : ''}
-                </div>
-            `;
-
-            return card;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return null;
-            try {
-                return new Date(dateString).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-            } catch {
-                return null;
-            }
-        }
-
-        function copyOtaUrl(url) {
+        function copyUrl(url) {
             navigator.clipboard.writeText(url).then(() => {
+                // Show notification
                 const notification = document.createElement('div');
-                notification.textContent = 'OTA URL copied to clipboard!';
+                notification.textContent = '✅ URL copied to clipboard!';
                 notification.style.cssText = `
                     position: fixed;
                     top: 20px;
@@ -957,6 +488,8 @@
                     padding: 1rem 2rem;
                     border-radius: 8px;
                     z-index: 1000;
+                    font-weight: 600;
+                    box-shadow: var(--shadow);
                     animation: slideIn 0.3s ease;
                 `;
                 document.body.appendChild(notification);
@@ -970,6 +503,18 @@
             });
         }
 
+        function formatDate(dateString) {
+            try {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch {
+                return dateString;
+            }
+        }
+
         // Add CSS for notification animation
         const style = document.createElement('style');
         style.textContent = `
@@ -980,24 +525,7 @@
         `;
         document.head.appendChild(style);
 
-        // Auto-format MAC address input
-        document.addEventListener('DOMContentLoaded', () => {
-            const macInput = document.getElementById('macAddressInput');
-            if (macInput) {
-                macInput.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
-                    if (value.length > 12) value = value.substr(0, 12);
-
-                    // Add colons every 2 characters
-                    value = value.match(/.{1,2}/g)?.join(':') || value;
-                    if (value !== e.target.value) {
-                        e.target.value = value;
-                    }
-                });
-            }
-        });
-
-        // Load manifest on page load
+        // Load manifest when page loads
         window.addEventListener('DOMContentLoaded', loadManifest);
     </script>
 </body>

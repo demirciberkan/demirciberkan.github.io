@@ -3,586 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVSEPARKER - Firmware Distribution Hub</title>
+    <title>EVSE Parker - Web Bluetooth</title>
     <style>
-        :root {
-            --primary-color: #2ecc71;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --warning-color: #f39c12;
-            --dark-bg: #2c3e50;
-            --light-bg: #ecf0f1;
-            --card-bg: #ffffff;
-            --text-dark: #2c3e50;
-            --text-light: #ffffff;
-            --text-muted: #7f8c8d;
-            --border-color: #bdc3c7;
-            --shadow: 0 4px 20px rgba(0,0,0,0.1);
-            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
-            --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--light-bg);
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-
-        /* Header */
-        .header {
-            background: var(--gradient);
-            color: var(--text-light);
-            padding: 2rem 0;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><path d="M0 20L100 0H0V20Z" fill="%23ffffff" fill-opacity="0.05"/></svg>');
-            background-size: 100px 20px;
-            animation: wave 20s linear infinite;
-        }
-
-        @keyframes wave {
-            0% { background-position-x: 0; }
-            100% { background-position-x: 100px; }
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        /* Navigation */
-        .nav-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin: 2rem 0;
-            flex-wrap: wrap;
-        }
-
-        .nav-link {
-            background: var(--card-bg);
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .nav-link:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-            background: var(--primary-color);
-            color: var(--text-light);
-        }
-
-        /* Stats Section */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* Device Cards */
-        .devices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-        }
-
-        .device-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .device-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: var(--gradient);
-        }
-
-        .device-card:hover {
-            transform: translateY(-8px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .device-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-
-        .device-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .device-status {
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-stable {
-            background: var(--primary-color);
-            color: var(--text-light);
-        }
-
-        .status-beta {
-            background: var(--warning-color);
-            color: var(--text-light);
-        }
-
-        .device-info {
-            margin-bottom: 2rem;
-        }
-
-        .device-version {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: var(--secondary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .device-changelog {
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 1rem;
-        }
-
-        .device-meta {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        /* Action Buttons */
-        .actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: var(--text-light);
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-            color: var(--text-light);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            color: var(--text-dark);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            opacity: 0.9;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--dark-bg);
-            color: var(--text-light);
-            padding: 3rem 0;
-            text-align: center;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .footer h3 {
-            margin-bottom: 1rem;
-        }
-
-        .footer p {
-            opacity: 0.8;
-            margin-bottom: 1rem;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-link {
-            color: var(--text-light);
-            text-decoration: none;
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-        }
-
-        .footer-link:hover {
-            opacity: 1;
-        }
-
-        /* Loading State */
-        .loading {
-            text-align: center;
-            padding: 4rem 0;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .nav-links {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .devices-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .actions {
-                flex-direction: column;
-            }
-
-            .btn {
-                justify-content: center;
-            }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { font-size: 24px; }
+        #status { color: red; }
+        button { padding: 10px; margin: 5px; }
+        .info { margin: 10px 0; }
+        .log { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .error { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="container">
-            <h1>EVSEPARKER</h1>
-            <p class="subtitle">Professional Electric Vehicle Supply Equipment - Firmware Distribution Hub</p>
-        </div>
-    </header>
-
-    <div class="container">
-        <nav class="nav-links">
-            <a href="index.html" class="nav-link">
-                <span>🔗</span> Web Bluetooth Control
-            </a>
-            <a href="#devices" class="nav-link">
-                <span>📦</span> Firmware Downloads
-            </a>
-            <a href="#documentation" class="nav-link">
-                <span>📚</span> Documentation
-            </a>
-            <a href="#support" class="nav-link">
-                <span>🛠️</span> Support
-            </a>
-        </nav>
-
-        <section class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="deviceCount">0</div>
-                <div class="stat-label">Device Models</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="firmwareCount">0</div>
-                <div class="stat-label">Firmware Versions</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="lastUpdate">-</div>
-                <div class="stat-label">Last Updated</div>
-            </div>
-        </section>
-
-        <section id="devices">
-            <div class="loading" id="loadingState">
-                <div class="loading-spinner"></div>
-                <p>Loading firmware information...</p>
-            </div>
-            <div class="devices-grid" id="devicesGrid" style="display: none;"></div>
-        </section>
+    <h1>EVSE Parker Control</h1>
+    <p><a href="index.html" style="color: #007bff;">← Back to Firmware Downloads</a></p>
+    <div id="status">Disconnected</div>
+    <div id="bluetoothSupport" class="error" style="display: none;">
+        Web Bluetooth is not supported in this browser. Please use Chrome or Edge.
+    </div>
+    <button id="connectButton" onclick="connectBLE()">Connect to EVSEPARKER</button>
+    <div class="info">
+        <p><strong>State:</strong> <span id="state">Unknown</span></p>
+        <p><strong>CP State:</strong> <span id="cpState">Unknown</span></p>
+        <p><strong>Mode:</strong> <span id="mode">Unknown</span></p>
+        <p><strong>Current:</strong> <span id="currentRMS">0.00</span> A</p>
+        <p><strong>Power:</strong> <span id="power">0.00</span> W</p>
+        <p><strong>Energy:</strong> <span id="energy">0.000</span> kWh</p>
+        <p><strong>Temperature:</strong> <span id="temperature">0.0</span> °C</p>
+        <p><strong>Safety Status:</strong> <span id="safetyStatus">None</span></p>
+        <p><strong>Demo Mode:</strong> <span id="demoMode">False</span></p>
+    </div>
+    <div>
+        <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
+        <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
+        <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
+        <button onclick="sendCommand('AUTO')">Auto Mode</button>
+        <button onclick="sendCommand('MANUAL 10')">Manual 10% Duty</button>
+        <button onclick="sendCommand('C6')">6A</button>
+        <button onclick="sendCommand('C16')">16A</button>
+        <button onclick="sendCommand('C32')">32A</button>
+        <button onclick="sendCommand('TEST_GFCI')">Test GFCI</button>
+    </div>
+    <div class="log">
+        <p><strong>Test Logs:</strong></p>
+        <div id="testLogs"></div>
     </div>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <h3>EVSEPARKER Firmware Distribution</h3>
-            <p>Professional-grade electric vehicle charging solutions with advanced OTA update capabilities.</p>
-            <div class="footer-links">
-                <a href="#" class="footer-link">GitHub Repository</a>
-                <a href="#" class="footer-link">Technical Documentation</a>
-                <a href="#" class="footer-link">Support Portal</a>
-                <a href="#" class="footer-link">License Information</a>
-            </div>
-        </div>
-    </footer>
-
     <script>
-        let manifestData = null;
+        let device = null;
+        let stateCharacteristic = null;
+        let commandCharacteristic = null;
+        const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+        const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+        const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
-        async function loadManifest() {
-            try {
-                const response = await fetch('manifest.json');
-                manifestData = await response.json();
-                updateStats();
-                renderDevices();
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('devicesGrid').style.display = 'grid';
-            } catch (error) {
-                console.error('Failed to load manifest:', error);
-                document.getElementById('loadingState').innerHTML = `
-                    <p style="color: var(--accent-color);">⚠️ Failed to load firmware information. Please try again later.</p>
-                `;
+        // NEW: Log to both console and UI
+        function logMessage(message) {
+            console.log(message);
+            const logsDiv = document.getElementById('testLogs');
+            const p = document.createElement('p');
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(p);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // NEW: Check Web Bluetooth support
+        function checkBluetoothSupport() {
+            if (!navigator.bluetooth) {
+                document.getElementById('bluetoothSupport').style.display = 'block';
+                document.getElementById('connectButton').disabled = true;
+                logMessage('Web Bluetooth API not supported. Use Chrome or Edge.');
+                return false;
             }
+            return true;
         }
 
-        function updateStats() {
-            if (!manifestData) return;
+        async function connectBLE() {
+            if (!checkBluetoothSupport()) return;
 
-            const deviceCount = manifestData.devices ? manifestData.devices.length : 0;
-            const firmwareCount = deviceCount; // For now, one firmware per device
-            const lastUpdate = manifestData.last_updated ?
-                new Date(manifestData.last_updated).toLocaleDateString() : '-';
-
-            document.getElementById('deviceCount').textContent = deviceCount;
-            document.getElementById('firmwareCount').textContent = firmwareCount;
-            document.getElementById('lastUpdate').textContent = lastUpdate;
-        }
-
-        function renderDevices() {
-            if (!manifestData || !manifestData.devices) return;
-
-            const grid = document.getElementById('devicesGrid');
-            grid.innerHTML = '';
-
-            manifestData.devices.forEach(device => {
-                const deviceCard = createDeviceCard(device);
-                grid.appendChild(deviceCard);
-            });
-        }
-
-        function createDeviceCard(device) {
-            const card = document.createElement('div');
-            card.className = 'device-card';
-
-            const isStable = device.latest_version && !device.latest_version.includes('beta') && !device.latest_version.includes('alpha');
-            const statusClass = isStable ? 'status-stable' : 'status-beta';
-            const statusText = isStable ? 'Stable' : 'Beta';
-
-            // Extract file size if available
-            const firmwareUrl = device.url || '#';
-            const fileName = firmwareUrl.split('/').pop();
-
-            card.innerHTML = `
-                <div class="device-header">
-                    <h3 class="device-name">${device.model || 'Unknown Model'}</h3>
-                    <span class="device-status ${statusClass}">${statusText}</span>
-                </div>
-
-                <div class="device-info">
-                    <div class="device-version">v${device.latest_version || 'Unknown'}</div>
-                    <p class="device-changelog">${device.changelog || 'No changelog available.'}</p>
-
-                    <div class="device-meta">
-                        <div class="meta-item">
-                            <span>📅</span>
-                            <span>${formatDate(device.release_date) || 'Unknown date'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span>📊</span>
-                            <span>${device.file_size || 'Unknown size'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span>🔧</span>
-                            <span>${device.hardware_version || 'V2 GEN2'}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="actions">
-                    <a href="${firmwareUrl}" class="btn btn-primary" download="${fileName}">
-                        <span>⬇️</span> Download Firmware
-                    </a>
-                    <button class="btn btn-secondary" onclick="copyOtaUrl('${firmwareUrl}')">
-                        <span>📋</span> Copy OTA URL
-                    </button>
-                    <a href="index.html" class="btn btn-outline">
-                        <span>🔗</span> Web Control
-                    </a>
-                </div>
-            `;
-
-            return card;
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return null;
             try {
-                return new Date(dateString).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
+                logMessage('Requesting Bluetooth device...');
+                device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'EVSEPARKER' }],
+                    optionalServices: [serviceUUID]
                 });
-            } catch {
-                return null;
+                document.getElementById('status').textContent = 'Connecting...';
+                logMessage('Connecting to GATT server...');
+                const server = await device.gatt.connect();
+                logMessage('Connected to GATT server');
+                const service = await server.getPrimaryService(serviceUUID);
+                logMessage('Service found');
+                stateCharacteristic = await service.getCharacteristic(stateUUID);
+                commandCharacteristic = await service.getCharacteristic(commandUUID);
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').style.color = 'green';
+                document.getElementById('connectButton').textContent = 'Disconnect';
+                document.getElementById('connectButton').onclick = disconnectBLE;
+                await stateCharacteristic.startNotifications();
+                stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
+                logMessage('Subscribed to state updates');
+                const initialValue = await stateCharacteristic.readValue();
+                handleStateUpdate({ target: { value: initialValue } });
+            } catch (error) {
+                document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
+                logMessage(`Connection error: ${error.message}`);
+                device = null;
+                stateCharacteristic = null;
+                commandCharacteristic = null;
             }
         }
 
-        function copyOtaUrl(url) {
-            navigator.clipboard.writeText(url).then(() => {
-                // Create a temporary notification
-                const notification = document.createElement('div');
-                notification.textContent = 'OTA URL copied to clipboard!';
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: var(--primary-color);
-                    color: white;
-                    padding: 1rem 2rem;
-                    border-radius: 8px;
-                    z-index: 1000;
-                    animation: slideIn 0.3s ease;
-                `;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }).catch(err => {
-                console.error('Failed to copy URL:', err);
-                alert('Failed to copy URL to clipboard');
-            });
+        async function disconnectBLE() {
+            if (device && device.gatt.connected) {
+                await device.gatt.disconnect();
+                logMessage('Disconnected from device');
+            }
+            document.getElementById('status').textContent = 'Disconnected';
+            document.getElementById('status').style.color = 'red';
+            document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
+            document.getElementById('connectButton').onclick = connectBLE;
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('resetButton').disabled = true;
+            device = null;
+            stateCharacteristic = null;
+            commandCharacteristic = null;
         }
 
-        // Add CSS for notification animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
+        function handleStateUpdate(event) {
+            try {
+                const value = new TextDecoder().decode(event.target.value);
+                const data = JSON.parse(value);
+                logMessage('Received state update');
+                document.getElementById('state').textContent = data.state || 'Unknown';
+                document.getElementById('cpState').textContent = data.cpState || 'Unknown';
+                document.getElementById('mode').textContent = data.mode || 'Unknown';
+                document.getElementById('currentRMS').textContent = (data.currentRMS || 0).toFixed(2);
+                document.getElementById('power').textContent = (data.power || 0).toFixed(2);
+                document.getElementById('energy').textContent = (data.deliveredEnergy || 0).toFixed(3);
+                document.getElementById('temperature').textContent = (data.temperature || 0).toFixed(1);
+                document.getElementById('safetyStatus').textContent = data.safetyStatus || 'None';
+                document.getElementById('demoMode').textContent = data.demoMode ? 'True' : 'False';
+                document.getElementById('startButton').disabled = !data.startButtonEnabled;
+                document.getElementById('stopButton').disabled = !data.stopButtonEnabled;
+                document.getElementById('resetButton').disabled = !data.resetButtonEnabled;
+                const logsDiv = document.getElementById('testLogs');
+                logsDiv.innerHTML = '<p><strong>Test Logs:</strong></p>';
+                if (data.testLogs) {
+                    data.testLogs.forEach(log => {
+                        const p = document.createElement('p');
+                        p.textContent = log;
+                        logsDiv.appendChild(p);
+                    });
+                }
+            } catch (error) {
+                logMessage(`State update error: ${error.message}`);
             }
-        `;
-        document.head.appendChild(style);
+        }
 
-        // Load manifest on page load
-        window.addEventListener('DOMContentLoaded', loadManifest);
+        async function sendCommand(command) {
+            if (!commandCharacteristic) {
+                logMessage('Error: Not connected to command characteristic');
+                return;
+            }
+            try {
+                const data = JSON.stringify({ command });
+                await commandCharacteristic.writeValue(new TextEncoder().encode(data));
+                logMessage(`Sent command: ${command}`);
+            } catch (error) {
+                logMessage(`Command send error: ${error.message}`);
+            }
+        }
+
+        // NEW: Initialize Bluetooth availability check
+        window.onload = () => {
+            checkBluetoothSupport();
+            if (navigator.bluetooth) {
+                navigator.bluetooth.addEventListener('availabilitychanged', (event) => {
+                    logMessage(`Bluetooth availability: ${event.value}`);
+                    if (!event.value) {
+                        disconnectBLE();
+                    }
+                });
+            }
+        };
     </script>
 </body>
 </html>
