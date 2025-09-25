@@ -3,190 +3,721 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EVSE Parker - Web Bluetooth</title>
+    <title>EVSEPARKER - Web Control</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { font-size: 24px; }
-        #status { color: red; }
-        button { padding: 10px; margin: 5px; }
-        .info { margin: 10px 0; }
-        .log { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
-        .error { color: red; font-weight: bold; }
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f1c40f;
+            --light-gray: #ecf0f1;
+            --medium-gray: #bdc3c7;
+            --dark-gray: #2c3e50;
+            --text-light: #fff;
+            --text-dark: #34495e;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--light-gray);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--success-color) 100%);
+            color: var(--text-light);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .nav-link:hover {
+            color: var(--text-light);
+        }
+
+        .card {
+            background: var(--text-light);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            background: var(--dark-gray);
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .connection-status {
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .status-disconnected {
+            background: var(--medium-gray);
+            color: var(--text-light);
+        }
+
+        .status-connecting {
+            background: var(--warning-color);
+            color: var(--text-dark);
+        }
+
+        .status-connected {
+            background: var(--success-color);
+            color: var(--text-light);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            background: var(--light-gray);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .status-item .label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .status-item .value {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .charge-state-display {
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: var(--text-light);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .state-no-ev { background-color: var(--medium-gray); }
+        .state-connected { background-color: var(--primary-color); }
+        .state-charging { background-color: var(--success-color); }
+        .state-error { background-color: var(--danger-color); }
+
+        .control-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .control-button.connect { background: var(--primary-color); }
+        .control-button.start { background: var(--success-color); }
+        .control-button.stop { background: var(--danger-color); }
+        .control-button.reset { background: var(--warning-color); color: var(--text-dark); }
+
+        .control-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .control-button:disabled {
+            background: var(--medium-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .setting-item label {
+            font-weight: 500;
+        }
+
+        .slider-container {
+            flex: 1;
+            margin-left: 20px;
+            margin-right: 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: var(--light-gray);
+            outline: none;
+            border-radius: 3px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-toggle {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--medium-gray);
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .slider-toggle:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--text-light);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-toggle {
+            background: var(--success-color);
+        }
+
+        input:checked + .slider-toggle:before {
+            transform: translateX(22px);
+        }
+
+        .save-button {
+            padding: 12px 25px;
+            background: var(--success-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .save-button:hover {
+            opacity: 0.9;
+        }
+
+        .error-banner {
+            display: none;
+            background: var(--danger-color);
+            color: var(--text-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .error-banner.active {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .footer-links {
+            margin-top: 10px;
+        }
+
+        .footer-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px auto;
+                padding: 0 10px;
+            }
+
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .slider-container {
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>EVSE Parker Control</h1>
-    <p><a href="index.html" style="color: #007bff;">← Back to Firmware Downloads</a></p>
-    <div id="status">Disconnected</div>
-    <div id="bluetoothSupport" class="error" style="display: none;">
-        Web Bluetooth is not supported in this browser. Please use Chrome or Edge.
-    </div>
-    <button id="connectButton" onclick="connectBLE()">Connect to EVSEPARKER</button>
-    <div class="info">
-        <p><strong>State:</strong> <span id="state">Unknown</span></p>
-        <p><strong>CP State:</strong> <span id="cpState">Unknown</span></p>
-        <p><strong>Mode:</strong> <span id="mode">Unknown</span></p>
-        <p><strong>Current:</strong> <span id="currentRMS">0.00</span> A</p>
-        <p><strong>Power:</strong> <span id="power">0.00</span> W</p>
-        <p><strong>Energy:</strong> <span id="energy">0.000</span> kWh</p>
-        <p><strong>Temperature:</strong> <span id="temperature">0.0</span> °C</p>
-        <p><strong>Safety Status:</strong> <span id="safetyStatus">None</span></p>
-        <p><strong>Demo Mode:</strong> <span id="demoMode">False</span></p>
-    </div>
-    <div>
-        <button id="startButton" onclick="sendCommand('START')" disabled>Start Charging</button>
-        <button id="stopButton" onclick="sendCommand('STOP')" disabled>Stop Charging</button>
-        <button id="resetButton" onclick="sendCommand('RESET')" disabled>Reset System</button>
-        <button onclick="sendCommand('AUTO')">Auto Mode</button>
-        <button onclick="sendCommand('MANUAL 10')">Manual 10% Duty</button>
-        <button onclick="sendCommand('C6')">6A</button>
-        <button onclick="sendCommand('C16')">16A</button>
-        <button onclick="sendCommand('C32')">32A</button>
-        <button onclick="sendCommand('TEST_GFCI')">Test GFCI</button>
-    </div>
-    <div class="log">
-        <p><strong>Test Logs:</strong></p>
-        <div id="testLogs"></div>
+    <div class="container">
+        <div class="header">
+            <h1>EVSEPARKER Web Control</h1>
+            <p>Control your EVSEPARKER device via Web Bluetooth</p>
+            <a href="index.html" class="nav-link">← Back to Firmware Downloads</a>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Connection Status</h2>
+                <span id="bluetoothSupport" style="display: none; color: var(--danger-color);">❌ Web Bluetooth Not Supported</span>
+            </div>
+            <div class="card-body">
+                <div id="connectionStatus" class="connection-status status-disconnected">
+                    Disconnected
+                </div>
+                <button id="connectButton" class="control-button connect" onclick="toggleConnection()">
+                    Connect to EVSEPARKER
+                </button>
+            </div>
+        </div>
+
+        <!-- Device Status -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Device Status</h2>
+            </div>
+            <div class="card-body">
+                <div id="errorBanner" class="error-banner"></div>
+                <div id="chargeState" class="charge-state-display state-no-ev">NO EV CONNECTED</div>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="label">Power</div>
+                        <div class="value"><span id="power">0</span> W</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Current</div>
+                        <div class="value"><span id="current">0.00</span> A</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Energy</div>
+                        <div class="value"><span id="deliveredEnergy">0.000</span> kWh</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Duration</div>
+                        <div class="value"><span id="time">0s</span></div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Temperature</div>
+                        <div class="value"><span id="temperature">0.0</span> °C</div>
+                    </div>
+                </div>
+
+                <button id="controlButton" class="control-button" onclick="sendControlCommand()" disabled>
+                    CONNECT TO DEVICE
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Settings</h2>
+            </div>
+            <div class="card-body">
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="currentSlider">Charging Current: <span id="currentValue">16 A</span></label>
+                        <div class="slider-container">
+                            <input type="range" id="currentSlider" class="slider" min="6" max="32" step="1" value="16">
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="unauthorizedUsage">Allow Charging Without App</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="unauthorizedUsage">
+                            <span class="slider-toggle"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="errorOnStateD">Error on State D (Ventilation)</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="errorOnStateD">
+                            <span class="slider-toggle"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <label for="tempThresholdSlider">Temp. Threshold: <span id="tempThresholdValue">60.0 °C</span></label>
+                        <div class="slider-container">
+                            <input type="range" id="tempThresholdSlider" class="slider" min="50" max="80" step="0.5" value="60.0">
+                        </div>
+                    </div>
+
+                    <button class="save-button" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>
+                <span id="macAddress">...</span> | FW: <span id="firmwareVersion">...</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">📦 Firmware Downloads</a>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px;">
+                EVSEPARKER Web Control Interface - Professional EV Charging Solutions
+            </div>
+        </div>
     </div>
 
     <script>
         let device = null;
         let stateCharacteristic = null;
         let commandCharacteristic = null;
+        let jsonBuffer = '';
+        let isConnected = false;
+        let isEditingSettings = false;
+        let isAuthenticated = false;
+
         const serviceUUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const stateUUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
         const commandUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
-        // NEW: Log to both console and UI
-        function logMessage(message) {
-            console.log(message);
-            const logsDiv = document.getElementById('testLogs');
-            const p = document.createElement('p');
-            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logsDiv.appendChild(p);
-            logsDiv.scrollTop = logsDiv.scrollHeight;
-        }
-
-        // NEW: Check Web Bluetooth support
         function checkBluetoothSupport() {
             if (!navigator.bluetooth) {
                 document.getElementById('bluetoothSupport').style.display = 'block';
                 document.getElementById('connectButton').disabled = true;
-                logMessage('Web Bluetooth API not supported. Use Chrome or Edge.');
                 return false;
             }
             return true;
+        }
+
+        async function toggleConnection() {
+            if (isConnected) {
+                disconnectBLE();
+            } else {
+                connectBLE();
+            }
         }
 
         async function connectBLE() {
             if (!checkBluetoothSupport()) return;
 
             try {
-                logMessage('Requesting Bluetooth device...');
+                console.log('Requesting Bluetooth device...');
+
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.textContent = 'Connecting...';
+                statusEl.className = 'connection-status status-connecting';
+
                 device = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'EVSEPARKER' }],
+                    filters: [{ namePrefix: 'EVSEPARKER_' }],
                     optionalServices: [serviceUUID]
                 });
-                document.getElementById('status').textContent = 'Connecting...';
-                logMessage('Connecting to GATT server...');
+
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+
+                console.log('Connecting to GATT server...');
                 const server = await device.gatt.connect();
-                logMessage('Connected to GATT server');
+
+                console.log('Getting service...');
                 const service = await server.getPrimaryService(serviceUUID);
-                logMessage('Service found');
+
+                console.log('Getting characteristics...');
                 stateCharacteristic = await service.getCharacteristic(stateUUID);
                 commandCharacteristic = await service.getCharacteristic(commandUUID);
-                document.getElementById('status').textContent = 'Connected';
-                document.getElementById('status').style.color = 'green';
-                document.getElementById('connectButton').textContent = 'Disconnect';
-                document.getElementById('connectButton').onclick = disconnectBLE;
+
                 await stateCharacteristic.startNotifications();
                 stateCharacteristic.addEventListener('characteristicvaluechanged', handleStateUpdate);
-                logMessage('Subscribed to state updates');
-                const initialValue = await stateCharacteristic.readValue();
-                handleStateUpdate({ target: { value: initialValue } });
+
+                isConnected = true;
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'connection-status status-connected';
+                document.getElementById('connectButton').textContent = 'Disconnect';
+                console.log('Connected and subscribed!');
+
             } catch (error) {
-                document.getElementById('status').textContent = `Connection Failed: ${error.message}`;
-                logMessage(`Connection error: ${error.message}`);
-                device = null;
-                stateCharacteristic = null;
-                commandCharacteristic = null;
+                console.error(`Connection failed: ${error}`);
+                alert(`Connection Failed: ${error.message}`);
+                disconnectBLE();
             }
+        }
+
+        function onDisconnected() {
+            console.log('Device disconnected.');
+            isConnected = false;
+            isAuthenticated = false;
+            device = null;
+            stateCharacteristic = null;
+            commandCharacteristic = null;
+
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = 'connection-status status-disconnected';
+            document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
+            document.getElementById('chargeState').textContent = 'NO EV CONNECTED';
+            document.getElementById('chargeState').className = 'charge-state-display state-no-ev';
+            document.getElementById('controlButton').disabled = true;
+            document.getElementById('controlButton').textContent = 'CONNECT TO DEVICE';
         }
 
         async function disconnectBLE() {
             if (device && device.gatt.connected) {
                 await device.gatt.disconnect();
-                logMessage('Disconnected from device');
+            } else {
+                onDisconnected();
             }
-            document.getElementById('status').textContent = 'Disconnected';
-            document.getElementById('status').style.color = 'red';
-            document.getElementById('connectButton').textContent = 'Connect to EVSEPARKER';
-            document.getElementById('connectButton').onclick = connectBLE;
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = true;
-            document.getElementById('resetButton').disabled = true;
-            device = null;
-            stateCharacteristic = null;
-            commandCharacteristic = null;
         }
 
         function handleStateUpdate(event) {
-            try {
-                const value = new TextDecoder().decode(event.target.value);
-                const data = JSON.parse(value);
-                logMessage('Received state update');
-                document.getElementById('state').textContent = data.state || 'Unknown';
-                document.getElementById('cpState').textContent = data.cpState || 'Unknown';
-                document.getElementById('mode').textContent = data.mode || 'Unknown';
-                document.getElementById('currentRMS').textContent = (data.currentRMS || 0).toFixed(2);
-                document.getElementById('power').textContent = (data.power || 0).toFixed(2);
-                document.getElementById('energy').textContent = (data.deliveredEnergy || 0).toFixed(3);
-                document.getElementById('temperature').textContent = (data.temperature || 0).toFixed(1);
-                document.getElementById('safetyStatus').textContent = data.safetyStatus || 'None';
-                document.getElementById('demoMode').textContent = data.demoMode ? 'True' : 'False';
-                document.getElementById('startButton').disabled = !data.startButtonEnabled;
-                document.getElementById('stopButton').disabled = !data.stopButtonEnabled;
-                document.getElementById('resetButton').disabled = !data.resetButtonEnabled;
-                const logsDiv = document.getElementById('testLogs');
-                logsDiv.innerHTML = '<p><strong>Test Logs:</strong></p>';
-                if (data.testLogs) {
-                    data.testLogs.forEach(log => {
-                        const p = document.createElement('p');
-                        p.textContent = log;
-                        logsDiv.appendChild(p);
-                    });
+            const value = new TextDecoder().decode(event.target.value);
+            jsonBuffer += value;
+
+            while (true) {
+                const startIndex = jsonBuffer.indexOf('START_JSON');
+                const endIndex = jsonBuffer.indexOf('END_JSON');
+
+                if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+                    break;
                 }
-            } catch (error) {
-                logMessage(`State update error: ${error.message}`);
+
+                const jsonString = jsonBuffer.substring(startIndex + 10, endIndex);
+                jsonBuffer = jsonBuffer.substring(endIndex + 8);
+
+                try {
+                    const data = JSON.parse(jsonString);
+                    console.log('Received data:', data);
+                    updateUI(data);
+                } catch (e) {
+                    console.error('JSON Parse Error:', e);
+                }
             }
         }
 
-        async function sendCommand(command) {
+        function updateUI(data) {
+            if (!data) return;
+
+            // Main Dashboard
+            document.getElementById('power').innerText = Math.round(data.pwr || 0);
+            document.getElementById('current').innerText = (data.crms || 0.0).toFixed(2);
+            document.getElementById('deliveredEnergy').innerText = (data.de || 0.0).toFixed(3);
+            document.getElementById('time').innerText = formatDuration(data.t);
+            document.getElementById('temperature').innerText = (data.tmp || 0.0).toFixed(1);
+
+            // Charge State
+            const chargeStateEl = document.getElementById('chargeState');
+            const stateMap = { 0: 'NO EV CONNECTED', 1: 'EV CONNECTED', 2: 'CHARGING', 3: 'ERROR' };
+            const classMap = { 0: 'state-no-ev', 1: 'state-connected', 2: 'state-charging', 3: 'state-error' };
+            chargeStateEl.textContent = stateMap[data.st] || 'UNKNOWN';
+            chargeStateEl.className = 'charge-state-display ' + (classMap[data.st] || 'state-no-ev');
+
+            // Error Banner
+            const errorBanner = document.getElementById('errorBanner');
+            if (data.st === 3) {
+                errorBanner.textContent = `Error: ${data.ec || 'Unknown'}`;
+                errorBanner.classList.add('active');
+            } else {
+                errorBanner.classList.remove('active');
+            }
+
+            // Control Button
+            const controlButton = document.getElementById('controlButton');
+            if (data.st === 3) {
+                controlButton.textContent = 'Reset System';
+                controlButton.className = 'control-button reset';
+                controlButton.disabled = false;
+            } else {
+                controlButton.textContent = data.us ? 'Start Charging' : 'Stop Charging';
+                controlButton.className = 'control-button ' + (data.us ? 'start' : 'stop');
+                controlButton.disabled = data.st === 0;
+            }
+
+            // Settings (only update if not being edited)
+            if (!isEditingSettings && data.cs) {
+                const currentValue = parseInt(data.cs.substring(1));
+                document.getElementById('currentSlider').value = currentValue;
+                document.getElementById('currentValue').innerText = `${currentValue} A`;
+                document.getElementById('unauthorizedUsage').checked = data.unauthUse || false;
+                document.getElementById('errorOnStateD').checked = data.eod || false;
+                document.getElementById('tempThresholdSlider').value = data.tt || 60.0;
+                document.getElementById('tempThresholdValue').innerText = `${(data.tt || 60.0).toFixed(1)} °C`;
+            }
+
+            // Footer
+            document.getElementById('macAddress').innerText = data.mac || '...';
+            document.getElementById('firmwareVersion').innerText = data.fw || '...';
+        }
+
+        async function sendCommand(commandObject) {
             if (!commandCharacteristic) {
-                logMessage('Error: Not connected to command characteristic');
+                alert('Not connected to command characteristic.');
                 return;
             }
             try {
-                const data = JSON.stringify({ command });
+                const data = JSON.stringify(commandObject);
                 await commandCharacteristic.writeValue(new TextEncoder().encode(data));
-                logMessage(`Sent command: ${command}`);
+                console.log('Sent command:', data);
             } catch (error) {
-                logMessage(`Command send error: ${error.message}`);
+                console.error(`Command send error: ${error}`);
             }
         }
 
-        // NEW: Initialize Bluetooth availability check
-        window.onload = () => {
-            checkBluetoothSupport();
-            if (navigator.bluetooth) {
-                navigator.bluetooth.addEventListener('availabilitychanged', (event) => {
-                    logMessage(`Bluetooth availability: ${event.value}`);
-                    if (!event.value) {
-                        disconnectBLE();
-                    }
-                });
-            }
-        };
+        function sendControlCommand() {
+            const button = document.getElementById('controlButton');
+            const command = button.textContent.replace(' Charging', '').replace(' System', '').toUpperCase();
+            sendCommand({ command });
+        }
+
+        function saveSettings() {
+            const settings = {
+                command: "SET_SETTINGS",
+                unauthorizedUsage: document.getElementById('unauthorizedUsage').checked,
+                errorOnStateD: document.getElementById('errorOnStateD').checked,
+                tempThreshold: parseFloat(document.getElementById('tempThresholdSlider').value)
+            };
+            sendCommand(settings);
+            alert('Settings saved!');
+        }
+
+        function formatDuration(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '0s';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m ${s}s`;
+            return `${s}s`;
+        }
+
+        // Event Listeners
+        document.getElementById('currentSlider').addEventListener('input', (e) => {
+            document.getElementById('currentValue').innerText = `${e.target.value} A`;
+        });
+
+        document.getElementById('currentSlider').addEventListener('change', (e) => {
+            sendCommand({ command: 'SET_CURRENT', value: `C${e.target.value}` });
+        });
+
+        document.getElementById('tempThresholdSlider').addEventListener('input', (e) => {
+            document.getElementById('tempThresholdValue').innerText = `${parseFloat(e.target.value).toFixed(1)} °C`;
+        });
+
+        // Settings editing state management
+        ['focus', 'input'].forEach(evt => {
+            document.querySelectorAll('.settings-grid input').forEach(el => {
+                el.addEventListener(evt, () => isEditingSettings = true);
+            });
+        });
+
+        ['blur', 'change'].forEach(evt => {
+            document.querySelectorAll('.settings-grid input').forEach(el => {
+                el.addEventListener(evt, () => isEditingSettings = false);
+            });
+        });
+
+        window.onload = checkBluetoothSupport;
     </script>
 </body>
 </html>

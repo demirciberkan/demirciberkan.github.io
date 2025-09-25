@@ -102,44 +102,42 @@
             margin-bottom: 1rem;
         }
 
-        .hardware-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+        .hardware-dropdown-container {
+            text-align: center;
             margin-top: 2rem;
         }
 
-        .hardware-card {
-            background: var(--light-bg);
-            border: 3px solid transparent;
-            border-radius: 12px;
-            padding: 2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .hardware-card:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-5px);
-            box-shadow: var(--shadow);
-        }
-
-        .hardware-card.selected {
-            border-color: var(--primary-color);
+        .hardware-select {
+            width: 100%;
+            max-width: 400px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             background: var(--card-bg);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .hardware-card h3 {
             color: var(--text-dark);
-            margin-bottom: 0.5rem;
-            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s ease;
         }
 
-        .hardware-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
+        .hardware-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .hardware-select option {
+            padding: 0.5rem;
+        }
+
+        #selectButton {
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+        }
+
+        #selectButton:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
         }
 
         .firmware-section {
@@ -287,8 +285,14 @@
                 font-size: 2rem;
             }
 
-            .hardware-grid {
-                grid-template-columns: 1fr;
+            .hardware-select {
+                font-size: 1rem;
+                padding: 0.8rem;
+            }
+
+            #selectButton {
+                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
             }
 
             .firmware-item {
@@ -320,7 +324,6 @@
         <div class="nav-section">
             <div class="nav-links">
                 <a href="control.html" class="nav-link">🔗 Web Control</a>
-                <a href="testing/" class="nav-link">🧪 Beta Testing</a>
             </div>
         </div>
 
@@ -329,10 +332,18 @@
             <h2>Select Your Hardware Version</h2>
             <p>Choose your EVSEPARKER hardware model to see available firmware downloads.</p>
 
-            <div class="hardware-grid" id="hardwareGrid">
-                <div class="loading">
+            <div class="hardware-dropdown-container">
+                <div class="loading" id="dropdownLoading">
                     <div class="loading-spinner"></div>
                     <p>Loading hardware models...</p>
+                </div>
+                <div id="hardwareSelection" style="display: none;">
+                    <select id="hardwareSelect" class="hardware-select">
+                        <option value="">-- Select Hardware Version --</option>
+                    </select>
+                    <button id="selectButton" class="btn btn-primary" onclick="loadFirmware()" disabled>
+                        📦 View Available Firmware
+                    </button>
                 </div>
             </div>
         </div>
@@ -380,40 +391,39 @@
         }
 
         function renderHardwareSelection() {
-            const grid = document.getElementById('hardwareGrid');
-            grid.innerHTML = '';
+            const select = document.getElementById('hardwareSelect');
+
+            // Clear existing options (keep the first default option)
+            select.innerHTML = '<option value="">-- Select Hardware Version --</option>';
 
             for (const [modelId, modelData] of Object.entries(manifestData.hardware_models)) {
-                const card = document.createElement('div');
-                card.className = 'hardware-card';
-                card.onclick = () => selectHardware(modelId);
-
-                card.innerHTML = `
-                    <h3>${modelData.name}</h3>
-                    <p>${modelData.description}</p>
-                    <p><strong>${modelData.firmware_versions.length}</strong> firmware version${modelData.firmware_versions.length > 1 ? 's' : ''} available</p>
-                `;
-
-                grid.appendChild(card);
+                const option = document.createElement('option');
+                option.value = modelId;
+                option.textContent = `${modelData.name} - ${modelData.firmware_versions.length} firmware version${modelData.firmware_versions.length > 1 ? 's' : ''}`;
+                select.appendChild(option);
             }
+
+            document.getElementById('dropdownLoading').style.display = 'none';
+            document.getElementById('hardwareSelection').style.display = 'block';
+
+            // Add change event listener
+            select.addEventListener('change', function() {
+                const selectButton = document.getElementById('selectButton');
+                selectButton.disabled = !this.value;
+            });
         }
 
-        function selectHardware(modelId) {
-            selectedHardware = modelId;
+        function loadFirmware() {
+            const select = document.getElementById('hardwareSelect');
+            selectedHardware = select.value;
 
-            // Update selection visual
-            document.querySelectorAll('.hardware-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            event.target.closest('.hardware-card').classList.add('selected');
+            if (!selectedHardware) return;
 
             // Show firmware section
-            setTimeout(() => {
-                document.getElementById('selectionSection').style.display = 'none';
-                document.getElementById('firmwareSection').classList.add('active');
-                renderFirmwareList();
-                document.getElementById('firmwareSection').scrollIntoView({ behavior: 'smooth' });
-            }, 300);
+            document.getElementById('selectionSection').style.display = 'none';
+            document.getElementById('firmwareSection').classList.add('active');
+            renderFirmwareList();
+            document.getElementById('firmwareSection').scrollIntoView({ behavior: 'smooth' });
         }
 
         function renderFirmwareList() {
@@ -466,9 +476,9 @@
             document.getElementById('selectionSection').style.display = 'block';
 
             // Clear selection
-            document.querySelectorAll('.hardware-card').forEach(card => {
-                card.classList.remove('selected');
-            });
+            const select = document.getElementById('hardwareSelect');
+            select.value = '';
+            document.getElementById('selectButton').disabled = true;
             selectedHardware = null;
 
             document.getElementById('selectionSection').scrollIntoView({ behavior: 'smooth' });
