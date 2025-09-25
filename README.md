@@ -1,72 +1,93 @@
 # EVSEPARKER Firmware Distribution Hub
 
-A comprehensive web platform for EVSEPARKER electric vehicle charging equipment, featuring firmware distribution, web-based device control, and OTA update management.
+A simplified web platform for EVSEPARKER electric vehicle charging equipment firmware distribution with MAC-based targeting for customer support.
 
 ## 🌟 Features
 
-- **Firmware Distribution**: Centralized repository for all EVSEPARKER firmware versions
+- **Simple Hardware Selection**: Users select their hardware version first, then see compatible firmware
+- **Firmware Distribution**: Organized by hardware model with version history
+- **MAC-Based Targeting**: Devices can query for MAC-specific firmware updates
 - **Web Bluetooth Control**: Direct device control through modern web browsers
-- **OTA Update System**: Over-the-air firmware updates via mobile app
-- **Beta Testing Portal**: Secure access to pre-release firmware builds
-- **Multi-Hardware Support**: Support for different hardware generations (V2 GEN1, V2 GEN2)
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Beta Testing Portal**: Separate portal for pre-release firmware builds
+- **Mobile Responsive**: Works on all device sizes
 
 ## 📁 Website Structure
 
 ```
 demirciberkan.github.io/
-├── index.html              # Web Bluetooth control interface
-├── firmware-index.html     # Main firmware distribution page
-├── manifest.json           # Stable firmware manifest
-├── README.md              # This documentation
-├── firmware/              # Stable firmware files
-│   ├── EVSEPARKER_V2_GEN1/
-│   └── EVSEPARKER_V2_GEN2/
-└── testing/               # Beta testing portal
-    ├── index.html         # Beta testing interface
-    ├── manifest.json      # Testing firmware manifest
-    └── firmware/          # Beta firmware files
-        ├── EVSEPARKER_V2_GEN1/
-        └── EVSEPARKER_V2_GEN2/
+├── index.html                    # Main firmware distribution page (hardware selection)
+├── control.html                  # Web Bluetooth control interface
+├── manifest.json                 # Simplified firmware manifest with MAC targeting
+├── device-api-example.md         # API documentation for device queries
+├── README.md                     # This documentation
+├── firmware/                     # Firmware files organized by model
+│   ├── EVSEPARKER_V2_GEN1/      # All GEN1 firmware versions in one folder
+│   │   ├── EVSE_10_2_0.bin
+│   │   ├── EVSE_10_1_43.bin
+│   │   └── EVSE_10_2_1_custom_ABCD.bin  # MAC-specific firmware example
+│   └── EVSEPARKER_V2_GEN2/      # All GEN2 firmware versions in one folder
+│       ├── EVSE_10_2_0.bin
+│       ├── EVSE_10_1_43.bin
+│       └── EVSE_10_2_1_custom_EFGH.bin  # MAC-specific firmware example
+└── testing/                     # Beta testing portal
+    ├── index.html               # Beta testing interface
+    └── manifest.json            # Testing firmware manifest
 ```
 
 ## 🚀 Quick Start
 
 ### For End Users
 
-1. **Web Control**: Visit `index.html` to control your EVSEPARKER device via Web Bluetooth
-2. **Firmware Updates**: Visit `firmware-index.html` to download the latest stable firmware
+1. **Firmware Downloads**: Visit `index.html` and select your hardware version to see available firmware
+2. **Web Control**: Visit `control.html` to control your EVSEPARKER device via Web Bluetooth
 3. **Mobile OTA**: Use the EVSEPARKER mobile app for wireless firmware updates
 
 ### For Developers/Beta Testers
 
 1. **Beta Access**: Visit `testing/index.html` for pre-release firmware builds
-2. **Safety First**: Always read the testing guidelines before using beta firmware
+2. **Device Integration**: See `device-api-example.md` for implementing firmware update queries
 3. **Bug Reports**: Use the provided links to report issues with beta builds
 
 ## 📦 Firmware Management
 
-### Stable Release Process
+### Simplified Manifest Structure
 
-1. Update `manifest.json` with new firmware information:
-   ```json
-   {
-     "devices": [
-       {
-         "model": "EVSEPARKER_V2_GEN2",
-         "latest_version": "10.2.0",
-         "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_0.bin",
-         "changelog": "Your release notes here",
-         "release_date": "2024-09-25T00:00:00Z",
-         "file_size": "1.15 MB"
-       }
-     ]
-   }
-   ```
+The `manifest.json` now uses a simpler structure organized by hardware models:
 
-2. Upload firmware binary to `firmware/[MODEL]/` directory
+```json
+{
+  "hardware_models": {
+    "EVSEPARKER_V2_GEN1": {
+      "name": "EVSEPARKER V2 GEN1",
+      "description": "Original V2 hardware revision",
+      "firmware_versions": [
+        {
+          "version": "10.2.0",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10_2_0.bin",
+          "description": "Enhanced OTA protocol. Fixed BLE issues.",
+          "release_date": "2024-09-25",
+          "file_size": "1.15 MB"
+        }
+      ]
+    }
+  },
+  "mac_specific": {
+    "AB:CD:EF:12:34:56": {
+      "model": "EVSEPARKER_V2_GEN2",
+      "version": "10.2.1-custom",
+      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_custom.bin",
+      "description": "Custom firmware for specific customer issue",
+      "expires": "2024-12-25"
+    }
+  }
+}
+```
 
-3. Test the download and OTA functionality
+### Adding New Firmware
+
+1. **Upload binary file** to the appropriate model folder: `firmware/[MODEL]/EVSE_[VERSION].bin`
+2. **Update manifest.json** by adding the new version to the firmware_versions array
+3. **Test the download** on the website
 
 ### Beta Release Process
 
