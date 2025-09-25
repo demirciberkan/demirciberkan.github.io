@@ -147,7 +147,23 @@
         </div>
 
         <footer>
-            <span id="macAddress">...</span> | FW: <span id="firmwareVersion">...</span>
+            <div style="margin-bottom: 1rem;">
+                <span id="macAddress">...</span> | FW: <span id="firmwareVersion">...</span>
+            </div>
+            <div style="margin-bottom: 1rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <a href="firmware-index.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                    📦 Firmware Downloads
+                </a>
+                <a href="testing/" style="color: var(--warning-color); text-decoration: none; font-weight: 600;">
+                    🧪 Beta Testing
+                </a>
+                <a href="#" onclick="showOtaInfo()" style="color: var(--success-color); text-decoration: none; font-weight: 600; cursor: pointer;">
+                    ℹ️ OTA Info
+                </a>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                EVSEPARKER Web Control Interface | <span id="buildDate">2024</span>
+            </div>
         </footer>
     </div>
 
@@ -170,6 +186,40 @@
             <input type="password" id="loginPin" placeholder="PIN (6 digits)" maxlength="6">
             <div class="modal-buttons">
                 <button class="save" onclick="login()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="otaInfoModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>📱 Over-The-Air (OTA) Updates</h3>
+            <div style="text-align: left; margin-bottom: 20px;">
+                <p style="margin-bottom: 15px;">Your EVSEPARKER device supports wireless firmware updates through the mobile app.</p>
+
+                <h4 style="color: var(--primary-color); margin-bottom: 10px;">📦 Available Update Methods:</h4>
+                <ul style="margin-bottom: 15px; padding-left: 20px;">
+                    <li><strong>Mobile App:</strong> Use the EVSEPARKER mobile app for seamless OTA updates</li>
+                    <li><strong>Manual Download:</strong> Download firmware files from our distribution portal</li>
+                </ul>
+
+                <h4 style="color: var(--primary-color); margin-bottom: 10px;">🔧 Current Device Info:</h4>
+                <div style="background: var(--light-gray); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <div><strong>MAC Address:</strong> <span id="modalMacAddress">Not connected</span></div>
+                    <div><strong>Firmware:</strong> <span id="modalFirmwareVersion">Unknown</span></div>
+                    <div><strong>Hardware:</strong> <span id="modalHardwareVersion">Unknown</span></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <a href="firmware-index.html" style="flex: 1; background: var(--primary-color); color: white; padding: 10px; text-align: center; text-decoration: none; border-radius: 5px; font-weight: 600;">
+                        📦 View Firmware Downloads
+                    </a>
+                    <button onclick="copyDeviceInfo()" style="flex: 1; background: var(--success-color); color: white; padding: 10px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">
+                        📋 Copy Device Info
+                    </button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel" onclick="document.getElementById('otaInfoModal').style.display='none'">Close</button>
             </div>
         </div>
     </div>
@@ -453,6 +503,46 @@
             el.addEventListener(evt, () => isEditingSettings = false);
         });
     });
+
+    function showOtaInfo() {
+        // Update modal with current device info
+        const macAddress = document.getElementById('macAddress').textContent || 'Not connected';
+        const firmwareVersion = document.getElementById('firmwareVersion').textContent || 'Unknown';
+
+        document.getElementById('modalMacAddress').textContent = macAddress;
+        document.getElementById('modalFirmwareVersion').textContent = firmwareVersion;
+
+        // Try to determine hardware version from device name or other info
+        let hardwareVersion = 'Unknown';
+        if (device && device.name) {
+            if (device.name.includes('EVSEPARKER_')) {
+                hardwareVersion = 'V2 (Auto-detected)';
+            }
+        }
+        document.getElementById('modalHardwareVersion').textContent = hardwareVersion;
+
+        document.getElementById('otaInfoModal').style.display = 'block';
+    }
+
+    function copyDeviceInfo() {
+        const macAddress = document.getElementById('modalMacAddress').textContent;
+        const firmwareVersion = document.getElementById('modalFirmwareVersion').textContent;
+        const hardwareVersion = document.getElementById('modalHardwareVersion').textContent;
+
+        const deviceInfo = `EVSEPARKER Device Information:
+MAC Address: ${macAddress}
+Firmware Version: ${firmwareVersion}
+Hardware Version: ${hardwareVersion}
+Timestamp: ${new Date().toISOString()}`;
+
+        navigator.clipboard.writeText(deviceInfo).then(() => {
+            alert('Device information copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy device info:', err);
+            // Fallback: show the info in an alert for manual copy
+            alert(`Device Info (copy manually):\n\n${deviceInfo}`);
+        });
+    }
 
     window.onload = checkBluetoothSupport;
 </script>

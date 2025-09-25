@@ -1,0 +1,92 @@
+{
+  "testing_notice": "⚠️ TESTING BUILDS - These firmware versions are for development and testing purposes only. They may contain bugs, unstable features, or incomplete functionality. Use at your own risk!",
+  "devices": [
+    {
+      "model": "EVSEPARKER_V2_GEN1",
+      "latest_version": "10.2.1-beta",
+      "url": "https://demirciberkan.github.io/testing/firmware/EVSEPARKER_V2_GEN1/EVSE_10_2_1_beta.bin",
+      "changelog": "TESTING: Experimental multi-threading improvements. New current sensor algorithms. Enhanced BLE performance optimizations.",
+      "release_date": "2024-09-25T18:00:00Z",
+      "file_size": "1.16 MB",
+      "hardware_version": "V2 GEN1",
+      "testing_status": "beta",
+      "testing_features": [
+        "Experimental threading model",
+        "New calibration algorithms",
+        "Enhanced BLE stack optimizations",
+        "Improved error recovery mechanisms"
+      ],
+      "known_issues": [
+        "May require manual reset after OTA update",
+        "Temperature sensor readings may fluctuate",
+        "Debug logging increases memory usage"
+      ],
+      "compatibility": ["ESP32", "Arduino Framework"],
+      "test_requirements": {
+        "min_testing_time": "24 hours",
+        "required_tests": [
+          "OTA update cycle",
+          "Multi-phase load testing",
+          "Temperature sensor validation",
+          "BLE reconnection stress test"
+        ]
+      }
+    },
+    {
+      "model": "EVSEPARKER_V2_GEN2",
+      "latest_version": "10.2.1-beta",
+      "url": "https://demirciberkan.github.io/testing/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_beta.bin",
+      "changelog": "TESTING: GEN2 hardware optimizations. Improved relay control timing. Advanced phase monitoring algorithms.",
+      "release_date": "2024-09-25T18:00:00Z",
+      "file_size": "1.16 MB",
+      "hardware_version": "V2 GEN2",
+      "testing_status": "beta",
+      "testing_features": [
+        "Optimized relay control for GEN2 hardware",
+        "Advanced phase loss detection",
+        "Improved PWM frequency control",
+        "Enhanced buzzer patterns"
+      ],
+      "known_issues": [
+        "Buzzer volume may be inconsistent",
+        "Phase detection sensitivity may need tuning",
+        "Relay timing may need adjustment per hardware unit"
+      ],
+      "compatibility": ["ESP32", "Arduino Framework"],
+      "test_requirements": {
+        "min_testing_time": "24 hours",
+        "required_tests": [
+          "Hardware-specific pin validation",
+          "Relay control timing verification",
+          "Buzzer functionality test",
+          "Phase monitoring accuracy test"
+        ]
+      }
+    }
+  ],
+  "testing_guidelines": {
+    "safety_requirements": [
+      "Always test with no live electrical connections initially",
+      "Use a current-limited power supply for testing",
+      "Have emergency stop procedures in place",
+      "Never leave testing firmware unattended during charging"
+    ],
+    "reporting": {
+      "bug_report_url": "https://github.com/demirciberkan/evseparker/issues/new?template=beta-bug-report.md",
+      "required_info": [
+        "Hardware revision and serial number",
+        "Firmware version and build date",
+        "Test conditions and environment",
+        "Step-by-step reproduction instructions",
+        "Serial console logs (if available)"
+      ]
+    },
+    "rollback_procedure": {
+      "stable_manifest_url": "https://demirciberkan.github.io/manifest.json",
+      "instructions": "If issues occur, immediately flash the latest stable firmware from the main manifest"
+    }
+  },
+  "last_updated": "2024-09-25T18:00:00Z",
+  "test_coordinator": "berkan@demirciberkan.com",
+  "access_level": "restricted"
+}

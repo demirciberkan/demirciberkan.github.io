@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVSEPARKER - Beta Testing Portal</title>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --secondary-color: #f39c12;
+            --success-color: #27ae60;
+            --warning-color: #f1c40f;
+            --dark-bg: #2c3e50;
+            --light-bg: #ecf0f1;
+            --card-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --text-muted: #7f8c8d;
+            --border-color: #bdc3c7;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+            --gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: var(--gradient);
+            color: var(--text-light);
+            padding: 1.5rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .warning-banner h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .warning-banner p {
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        /* Header */
+        .header {
+            background: var(--dark-bg);
+            color: var(--text-light);
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            background: var(--card-bg);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .nav-link.primary {
+            background: var(--success-color);
+            color: var(--text-light);
+        }
+
+        /* Guidelines Section */
+        .guidelines {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .guidelines h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .safety-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .safety-list li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--light-bg);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+        }
+
+        .safety-list li:last-child {
+            border-bottom: none;
+        }
+
+        .safety-list .icon {
+            font-size: 1.2rem;
+            margin-top: 0.1rem;
+        }
+
+        /* Device Cards */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .device-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .beta-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--warning-color);
+            color: var(--text-dark);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .device-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .device-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.3rem;
+        }
+
+        .device-version {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .device-changelog {
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .features-section, .issues-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .features-section h4, .issues-section h4 {
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .features-list, .issues-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li, .issues-list li {
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .features-list li::before {
+            content: "✨";
+            margin-top: 0.1rem;
+        }
+
+        .issues-list li::before {
+            content: "⚠️";
+            margin-top: 0.1rem;
+        }
+
+        .test-requirements {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .test-requirements h4 {
+            margin-bottom: 0.8rem;
+            color: var(--text-dark);
+        }
+
+        .test-requirements ul {
+            list-style: disc;
+            padding-left: 1.2rem;
+        }
+
+        .test-requirements li {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger {
+            background: var(--primary-color);
+            color: var(--text-light);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: var(--text-dark);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark-bg);
+            color: var(--text-light);
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .devices-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .nav-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-banner">
+        <h2>⚠️ TESTING BUILDS - USE AT YOUR OWN RISK ⚠️</h2>
+        <p>These firmware versions are for development and testing purposes only. They may contain bugs or unstable features.</p>
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <h1>EVSEPARKER Beta Testing</h1>
+            <p class="subtitle">Pre-release firmware testing portal for developers and beta testers</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="nav-links">
+            <a href="../firmware-index.html" class="nav-link primary">
+                <span>✅</span> Stable Releases
+            </a>
+            <a href="#testing-builds" class="nav-link">
+                <span>🧪</span> Testing Builds
+            </a>
+            <a href="#guidelines" class="nav-link">
+                <span>📋</span> Testing Guidelines
+            </a>
+            <a href="#" class="nav-link">
+                <span>🐛</span> Report Bug
+            </a>
+        </nav>
+
+        <section id="guidelines" class="guidelines">
+            <h2>🛡️ Safety Requirements & Testing Guidelines</h2>
+            <ul class="safety-list">
+                <li>
+                    <span class="icon">⚡</span>
+                    <div>
+                        <strong>Electrical Safety:</strong> Always test with no live electrical connections initially. Use a current-limited power supply for testing.
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">🛑</span>
+                    <div>
+                        <strong>Emergency Procedures:</strong> Have emergency stop procedures in place and never leave testing firmware unattended during charging.
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">📊</span>
+                    <div>
+                        <strong>Data Collection:</strong> Monitor serial console output and document any unexpected behavior or error messages.
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">⏱️</span>
+                    <div>
+                        <strong>Testing Duration:</strong> Run each firmware for minimum 24 hours under various load conditions before reporting results.
+                    </div>
+                </li>
+                <li>
+                    <span class="icon">🔄</span>
+                    <div>
+                        <strong>Rollback Plan:</strong> Keep stable firmware ready for immediate rollback if critical issues are discovered.
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <section id="testing-builds">
+            <div class="loading" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p>Loading testing firmware information...</p>
+            </div>
+            <div class="devices-grid" id="devicesGrid" style="display: none;"></div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>EVSEPARKER Beta Testing Portal - For authorized testers only</p>
+        </div>
+    </footer>
+
+    <script>
+        let manifestData = null;
+
+        async function loadManifest() {
+            try {
+                const response = await fetch('manifest.json');
+                manifestData = await response.json();
+                renderDevices();
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('devicesGrid').style.display = 'grid';
+            } catch (error) {
+                console.error('Failed to load testing manifest:', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <p style="color: var(--primary-color);">⚠️ Failed to load testing firmware information. Please check your access permissions.</p>
+                `;
+            }
+        }
+
+        function renderDevices() {
+            if (!manifestData || !manifestData.devices) return;
+
+            const grid = document.getElementById('devicesGrid');
+            grid.innerHTML = '';
+
+            manifestData.devices.forEach(device => {
+                const deviceCard = createDeviceCard(device);
+                grid.appendChild(deviceCard);
+            });
+        }
+
+        function createDeviceCard(device) {
+            const card = document.createElement('div');
+            card.className = 'device-card';
+
+            const featuresHtml = device.testing_features
+                ? device.testing_features.map(feature => `<li>${feature}</li>`).join('')
+                : '<li>No testing features listed</li>';
+
+            const issuesHtml = device.known_issues
+                ? device.known_issues.map(issue => `<li>${issue}</li>`).join('')
+                : '<li>No known issues</li>';
+
+            const requirementsHtml = device.test_requirements?.required_tests
+                ? device.test_requirements.required_tests.map(test => `<li>${test}</li>`).join('')
+                : '<li>Standard testing protocol</li>';
+
+            card.innerHTML = `
+                <div class="beta-badge">${device.testing_status || 'BETA'}</div>
+
+                <div class="device-header">
+                    <h3 class="device-name">${device.model || 'Unknown Model'}</h3>
+                    <div class="device-version">v${device.latest_version || 'Unknown'}</div>
+                    <p class="device-changelog">${device.changelog || 'No changelog available.'}</p>
+                </div>
+
+                <div class="features-section">
+                    <h4>🧪 Testing Features</h4>
+                    <ul class="features-list">
+                        ${featuresHtml}
+                    </ul>
+                </div>
+
+                <div class="issues-section">
+                    <h4>⚠️ Known Issues</h4>
+                    <ul class="issues-list">
+                        ${issuesHtml}
+                    </ul>
+                </div>
+
+                <div class="test-requirements">
+                    <h4>📋 Required Tests</h4>
+                    <ul>
+                        ${requirementsHtml}
+                    </ul>
+                    <small><strong>Minimum testing time:</strong> ${device.test_requirements?.min_testing_time || '24 hours'}</small>
+                </div>
+
+                <div class="actions">
+                    <a href="${device.url || '#'}" class="btn btn-danger" download>
+                        <span>⬇️</span> Download Beta
+                    </a>
+                    <button class="btn btn-warning" onclick="copyOtaUrl('${device.url || '#'}')">
+                        <span>📋</span> Copy OTA URL
+                    </button>
+                    <a href="../index.html" class="btn btn-outline">
+                        <span>🔗</span> Web Control
+                    </a>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function copyOtaUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                const notification = document.createElement('div');
+                notification.textContent = 'Beta OTA URL copied to clipboard!';
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: var(--warning-color);
+                    color: var(--text-dark);
+                    padding: 1rem 2rem;
+                    border-radius: 8px;
+                    z-index: 1000;
+                    font-weight: 600;
+                    box-shadow: var(--shadow);
+                    animation: slideIn 0.3s ease;
+                `;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+                alert('Failed to copy URL to clipboard');
+            });
+        }
+
+        // Add CSS for notification animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            .loading {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .loading-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid var(--border-color);
+                border-top: 3px solid var(--primary-color);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 1rem;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Load manifest on page load
+        window.addEventListener('DOMContentLoaded', loadManifest);
+    </script>
+</body>
+</html>
