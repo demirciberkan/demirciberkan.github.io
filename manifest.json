@@ -1,9 +1,29 @@
 {
   "hardware_models": {
+    "EVSEPARKER_V2_GEN1": {
+      "name": "EVSEPARKER V2 GEN1",
+      "description": "Hardware model EVSEPARKER_V2_GEN1",
+      "firmware_versions": [
+        {
+          "version": "10.2.1",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN1/EVSE_10.2.1.bin",
+          "description": "Firmware version 10.2.1",
+          "release_date": "2025-11-07",
+          "file_size": "1.2 MB"
+        }
+      ]
+    },
     "EVSEPARKER_V2_GEN2": {
       "name": "EVSEPARKER V2 GEN2",
       "description": "Hardware model EVSEPARKER_V2_GEN2",
       "firmware_versions": [
+        {
+          "version": "10.2.1",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10.2.1.bin",
+          "description": "Firmware version 10.2.1",
+          "release_date": "2025-11-07",
+          "file_size": "1.2 MB"
+        },
         {
           "version": "10.2.0",
           "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_0.bin",
@@ -14,14 +34,6 @@
       ]
     }
   },
-  "mac_specific": {
-    "AB:CD:EF:12:34:56": {
-      "model": "EVSEPARKER_V2_GEN2",
-      "version": "10.2.1-custom",
-      "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10_2_1_custom_ABCDEF123456.bin",
-      "description": "Custom firmware for specific relay timing issue",
-      "expires": "2024-12-25"
-    }
-  },
-  "last_updated": "2025-11-07T16:14:51.001099"
+  "mac_specific": {},
+  "last_updated": "2025-11-07T17:00:00.000000"
 }
