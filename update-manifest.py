@@ -34,7 +34,7 @@ class ManifestUpdater:
     def _parse_firmware_filename(self, filename):
         name, _ = os.path.splitext(filename)
         # EVSE_10_2_1_custom_ABCDEF123456
-        custom_match = re.match(r'EVSE_(\d+)_(\d+)_(\d+)_custom_(.+)', name)
+        custom_match = re.match(r'EVSE_(\d+)\.(\d+)\.(\d+)_custom_(.+)', name)
         if custom_match:
             major, minor, patch, identifier = custom_match.groups()
             version = f"{major}.{minor}.{patch}"
@@ -43,8 +43,8 @@ class ManifestUpdater:
                 'is_custom': True,
                 'custom_identifier': identifier
             }
-        # EVSE_10_2_0
-        regular_match = re.match(r'EVSE_(\d+)_(\d+)_(\d+)', name)
+        # EVSE_10.2.0
+        regular_match = re.match(r'EVSE_(\d+)\.(\d+)\.(\d+)', name)
         if regular_match:
             major, minor, patch = regular_match.groups()
             version = f"{major}.{minor}.{patch}"

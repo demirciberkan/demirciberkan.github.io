@@ -96,6 +96,70 @@ The `manifest.json` now uses a simpler structure organized by hardware models:
 3. Notify beta testers of new builds available
 4. Monitor for feedback and bug reports
 
+## 펌웨어 업데이트 시스템
+
+Bu bölüm, yeni aygıt yazılımının nasıl ekleneceğini ve `manifest.json` dosyasının nasıl güncelleneceğini açıklamaktadır.
+
+### Otomatik Manifest Güncelleme
+
+`update-all.sh` betiği, `firmware` dizinindeki dosyaları tarayarak `manifest.json` dosyasını otomatik olarak oluşturur.
+
+**Kullanım:**
+
+```bash
+./update-all.sh
+```
+
+Bu betik, `update-manifest.py` betiğini çalıştırır ve aşağıdaki işlemleri gerçekleştirir:
+
+1.  `firmware` dizinini ve alt dizinlerini tarar.
+2.  Dosya adlarını ayrıştırarak sürüm ve model bilgilerini çıkarır.
+3.  MAC adresi tabanlı özel aygıt yazılımlarını belirler.
+4.  `manifest.json` dosyasını oluşturur veya günceller.
+
+### Dosya Adlandırma Kuralları
+
+Betiğin aygıt yazılımı dosyalarını doğru şekilde ayrıştırabilmesi için aşağıdaki adlandırma kurallarına uyulmalıdır:
+
+#### Standart Aygıt Yazılımı
+
+Standart aygıt yazılımı dosyaları aşağıdaki biçimde adlandırılmalıdır:
+
+`EVSE_<major>.<minor>.<patch>.bin`
+
+**Örnek:**
+
+`EVSE_10.2.2.bin`
+
+Bu dosyalar, ilgili donanım modelinin dizinine yerleştirilmelidir:
+
+`firmware/EVSEPARKER_V2_GEN2/EVSE_10.2.2.bin`
+
+#### MAC Adresine Özel Aygıt Yazılımı
+
+MAC adresine özel aygıt yazılımı dosyaları, belirli bir cihaza yönelik özel sürümlerdir. Bu dosyalar aşağıdaki biçimde adlandırılmalıdır:
+
+`EVSE_<major>.<minor>.<patch>_custom_<identifier>.bin`
+
+-   `<major>.<minor>.<patch>`: Aygıt yazılımı sürümü.
+-   `<identifier>`: Özel aygıt yazılımı için benzersiz bir tanımlayıcı. Tanımlayıcının son 12 karakteri geçerli bir onaltılık dize ise, bu bir MAC adresi olarak yorumlanacaktır.
+
+**Örnek:**
+
+`EVSE_10.2.2_custom_MyCustomFirmware_AABBCCDDEEFF.bin`
+
+Bu örnekte, betik `AA:BB:CC:DD:EE:FF` MAC adresini çıkaracak ve `manifest.json` dosyasındaki `mac_specific` bölümüne ekleyecektir.
+
+Bu dosyalar da ilgili donanım modelinin dizinine yerleştirilmelidir:
+
+`firmware/EVSEPARKER_V2_GEN2/EVSE_10.2.2_custom_MyCustomFirmware_AABBCCDDEEFF.bin`
+
+### Yeni Aygıt Yazılımı Ekleme Adımları
+
+1.  Aygıt yazılımı dosyasını yukarıdaki adlandırma kurallarına göre adlandırın.
+2.  Dosyayı doğru donanım modeli dizinine yerleştirin (örneğin, `firmware/EVSEPARKER_V2_GEN2/`).
+3.  `./update-all.sh` betiğini çalıştırarak `manifest.json` dosyasını güncelleyin.
+
 ## 🔧 Hardware Support
 
 ### EVSEPARKER_V2_GEN1
