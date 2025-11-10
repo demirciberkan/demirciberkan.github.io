@@ -5,6 +5,13 @@
       "description": "Hardware model EVSEPARKER_V2_GEN2",
       "firmware_versions": [
         {
+          "version": "10.2.6",
+          "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10.2.6.bin",
+          "description": "Firmware version 10.2.6",
+          "release_date": "2025-11-10",
+          "file_size": "1.14 MB"
+        },
+        {
           "version": "10.2.5",
           "url": "https://demirciberkan.github.io/firmware/EVSEPARKER_V2_GEN2/EVSE_10.2.5_demo.bin",
           "description": "Demo Firmware",
@@ -49,5 +56,5 @@
     }
   },
   "mac_specific": {},
-  "last_updated": "2025-11-10T19:32:04.328722"
+  "last_updated": "2025-11-10T21:25:26.599557"
 }
